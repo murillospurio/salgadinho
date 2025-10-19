@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Convêniencia Machine</title>
+<style>
+body {
+  font-family: Arial;
+  margin:0; padding:0;
+  background: url('fundo.png') no-repeat center center fixed;
+  background-size: cover;
+  overflow-x: hidden;
+  font-size: 40px; 
+}
+h1 {
+  text-align:center;
+  color:#0816da;
+  text-shadow:1px 1px 5px rgba(0,0,0,0.7);
+  margin-top:150px;
+  margin-bottom: 200px;
+  text-align: center;
+}
+/* Produtos */
+#produtos {
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type: x mandatory;
+  padding:50px 20px 120px 20px;
+  gap:20px;
+  justify-content:flex-start;
+  scrollbar-width:none;
+}
+#produtos::-webkit-scrollbar { display:none; }
+.produto {
+  flex:0 0 450px;
+  height:850px;
+  scroll-snap-align:center;
+  border-radius:12px;
+  background:rgba(255,255,255,0.9);
+  box-shadow:0 6px 10px rgba(0,0,0,0.3);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  transition: transform 0.3s, opacity 0.3s;
+  padding:12px;
+  box-sizing:border-box;
+}
+.produto img { width:auto; height:400px; object-fit:contain; }
+.produto div { font-size:32px; }
+.produto button {
+  padding:22px 28px;
+  margin:8px;
+  cursor:pointer;
+  border:none;
+  border-radius:5px;
+  background-color:#007bff;
+  color:#fff;
+  font-size:32px;
+}
+.produto button:hover { background-color:#0056b3; }
+.produto.central { transform:scale(1.1); opacity:1; z-index:10; }
+.produto:not(.central) { transform:scale(0.85); opacity:0.6; z-index:1; }
+/* Carrinho */
+.carrinho {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  background: rgba(255,255,255,0.60);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+  font-size: 30px;
+  z-index: 100;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+.carrinho img { width: 100px; height: 100px; margin: 0; }
+#itensCarrinho {
+  flex-grow: 1;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 0 10px;
+  font-size: 26px;
+}
+.carrinho button {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 10px; 
+  padding: 16px 22px;
+  font-size: 30px;
+  border-radius: 6px;
+  margin: 10px;
+}
+/* Overlay */
+#overlay {
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.95);
+  color:#fff;
+  z-index:9999;
+  text-align:center;
+  box-sizing:border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+#overlay.show { opacity: 1; pointer-events: all; }
+#overlay h2 { margin-bottom:20px; font-size:35px; }
+#overlay div { margin-bottom:15px; font-size:35px; }
+#overlay button {
+  margin:10px;
+  padding:14px 28px;
+  font-size:20px;
+  border-radius:10px;
+  cursor:pointer;
+  background-color:#007bff;
+  border:none;
+  color:#fff;
+  transition: background 0.3s;
+}
+#overlay button:hover { background-color:#0056b3; }
+/* Opções de pagamento */
+#pagamentoOpcoes {
+  display: none;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+#pagamentoOpcoes button {
+  font-size: 28px;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+}
+#btnDebito { background-color: #007bff; }
+#btnCredito { background-color: #28a745; }
+#btnPix { background-color: #ffc107; color: #000; }
+/* Tela de repouso */
+#telaRepouso {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: radial-gradient(circle at center, rgba(0,102,204,0.6), rgba(0,0,50,0.95));
+  display: none;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+  color: white;
+  pointer-events: none;
+}
+#telaRepouso.ativo { display: flex; opacity: 1; pointer-events: all; }
+#telaRepouso h1 {
+  font-size: 60px;
+  font-family: 'Arial Black', sans-serif;
+  text-shadow: 0 0 20px rgba(210, 226, 237, 0.9);
+  background: linear-gradient(90deg, #a0ccdb, #9cb9e4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+</style>
+</head>
+<body>
+<h1>Convêniencia Machine</h1>
+<div id="produtos"></div>
+
+<div class="carrinho">
+  <img src="carrinho_novo.png" alt="Carrinho">
+  <div id="itensCarrinho">Vazio</div>
+  <div>Total: R$ <span id="total">0.00</span></div>
+  <button id="verPedidoBtn">Ver Pedido</button>
+  <button onclick="cancelarPedido()">Cancelar Pedido</button>
+</div>
+
+<div id="overlay">
+  <h2>Seu Pedido</h2>
+  <div id="overlayItens"></div>
+  <button id="overlayConfirmarBtn">Confirmar Pedido</button>
+
+  <div id="pagamentoOpcoes">
+    <button id="btnDebito" onclick="confirmarComForma('debito')">💳 Débito</button>
+    <button id="btnCredito" onclick="confirmarComForma('credito')">💰 Crédito</button>
+    <button id="btnPix" onclick="confirmarComForma('pix')">⚡ Pix</button>
+  </div>
+  <button onclick="fecharOverlay()">Cancelar</button>
+</div>
+
+<script>
+const produtos = [
+  {id:1, nome:"Bis", preco:0.25, estoque:10, img:"produto_1.png"},
+  {id:2, nome:"Snickers", preco:0.50, estoque:20, img:"produto_2.png"},
+  {id:3, nome:"KitKat", preco:1.00, estoque:20, img:"produto_3.png"},
+  {id:4, nome:"Halls", preco:0.60, estoque:15, img:"produto_4.png"},
+  {id:5, nome:"Trident", preco:0.30, estoque:16, img:"produto_5.png"},
+  {id:6, nome:"Torcida Pimenta", preco:0.10, estoque:10, img:"produto_6.png"},
+  {id:7, nome:"Torcida Churrasco", preco:0.15, estoque:23, img:"produto_7.png"},
+  {id:8, nome:"Ovinho", preco:0.35, estoque:14, img:"produto_8.png"},
+  {id:9, nome:"Doritos", preco:0.45, estoque:16, img:"produto_9.png"},
+  {id:10, nome:"Rufles", preco:0.56, estoque:14, img:"produto_10.png"},
+  {id:11, nome:"Fandangos", preco:0.67, estoque:11, img:"produto_11.png"},
+  {id:12, nome:"Cheetos", preco:0.82, estoque:6, img:"produto_12.png"}
+];
+
+let carrinho = {};
+let timerLimpeza = null;
+
+// === SALVAR E CARREGAR ESTOQUE ===
+function salvarEstoque() {
+  localStorage.setItem("estoqueAtual", JSON.stringify(produtos));
+}
+function carregarEstoque() {
+  const salvo = localStorage.getItem("estoqueAtual");
+  if (salvo) {
+    const produtosSalvos = JSON.parse(salvo);
+    produtos.forEach((p, i) => { p.estoque = produtosSalvos[i].estoque; });
+  }
+}
+
+function mostrarProdutos() {
+  const div = document.getElementById('produtos');
+  div.innerHTML='';
+  produtos.forEach(p=>{
+    const prodDiv=document.createElement('div');
+    prodDiv.className='produto';
+    prodDiv.innerHTML=`
+      <img src="${p.img}" alt="${p.nome}">
+      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: <span id="estoque-${p.id}">${p.estoque}</span></div>
+      <div>
+        <button onclick="alterarQuantidade(${p.id}, -1)">-</button>
+        <span id="qtd-${p.id}">0</span>
+        <button onclick="alterarQuantidade(${p.id}, 1)">+</button>
+      </div>`;
+    div.appendChild(prodDiv);
+  });
+  destacarCentral();
+}
+
+function alterarQuantidade(id, delta) {
+  const produto = produtos.find(p => p.id === id);
+  if(!carrinho[id]) carrinho[id]=0;
+  let novaQtd = carrinho[id] + delta;
+  if(novaQtd < 0) novaQtd = 0;
+  if(novaQtd > produto.estoque) novaQtd = produto.estoque;
+  let diff = novaQtd - carrinho[id];
+  produto.estoque -= diff;
+  carrinho[id] = novaQtd;
+  document.getElementById(`qtd-${id}`).innerText = novaQtd;
+  document.getElementById(`estoque-${id}`).innerText = produto.estoque;
+  atualizarCarrinho();
+  salvarEstoque();
+  resetTimerLimpeza();
+}
+
+function atualizarCarrinho() {
+  const div=document.getElementById('itensCarrinho');
+  div.innerHTML='';
+  let total=0; let vazio=true;
+  for(let id in carrinho){
+    if(carrinho[id]>0){
+      vazio=false;
+      const p=produtos.find(prod=>prod.id==id);
+      total+=p.preco*carrinho[id];
+      div.innerHTML += `${p.nome} x ${carrinho[id]} = R$ ${(p.preco*carrinho[id]).toFixed(2)}<br>`;
+    }
+  }
+  if(vazio) div.innerHTML='Vazio';
+  document.getElementById('total').innerText=total.toFixed(2);
+}
+
+function cancelarPedido(){
+  for(let id in carrinho){
+    const qtd = carrinho[id];
+    if(qtd>0){
+      const produto = produtos.find(p=>p.id==id);
+      produto.estoque += qtd;
+      document.getElementById(`estoque-${id}`).innerText = produto.estoque;
+    }
+  }
+  carrinho={};
+  mostrarProdutos();
+  atualizarCarrinho();
+  salvarEstoque();
+  resetTimerLimpeza();
+}
+
+function destacarCentral() {
+  const produtosDivs=document.querySelectorAll('.produto');
+  const container=document.getElementById('produtos');
+  container.addEventListener('scroll',()=>{
+    const meio=container.scrollLeft+container.offsetWidth/2;
+    produtosDivs.forEach(p=>{
+      const pCentro=p.offsetLeft+p.offsetWidth/2;
+      if(Math.abs(meio-pCentro)<p.offsetWidth/2) p.classList.add('central');
+      else p.classList.remove('central');
+    });
+  });
+  produtosDivs[0].classList.add('central');
+}
+
+const overlay=document.getElementById('overlay');
+const overlayItens=document.getElementById('overlayItens');
+let overlayTimer = null;
+
+document.getElementById('verPedidoBtn').addEventListener('click',()=>{
+  overlayItens.innerHTML='';
+  let total=0; let vazio=true;
+  for(let id in carrinho){
+    if(carrinho[id]>0){
+      vazio=false;
+      const p=produtos.find(prod=>prod.id==id);
+      total+=p.preco*carrinho[id];
+      overlayItens.innerHTML += `${p.nome} x ${carrinho[id]} = R$ ${(p.preco*carrinho[id]).toFixed(2)}<br>`;
+    }
+  }
+  if(vazio) overlayItens.innerHTML='Carrinho vazio!';
+  else overlayItens.innerHTML += `<br><b>Total: R$ ${total.toFixed(2)}</b>`;
+  
+  overlay.classList.add('show');
+  document.getElementById('pagamentoOpcoes').style.display = 'flex';
+  if(overlayTimer) clearTimeout(overlayTimer);
+  overlayTimer = setTimeout(()=>{ fecharOverlay(); },15000);
+});
+
+function fecharOverlay(){
+  overlay.classList.remove('show');
+  document.getElementById('pagamentoOpcoes').style.display='none';
+  if(overlayTimer) { clearTimeout(overlayTimer); overlayTimer = null; }
+}
+
+function confirmarComForma(forma) {
+  const items = [];
+  let total = 0;
+  for (let id in carrinho) {
+    const qtd = carrinho[id];
+    if (qtd > 0) {
+      const p = produtos.find(prod => prod.id == id);
+      items.push({ id: p.id, name: p.nome.toLowerCase().replace(/\s/g, "_"), qty: qtd });
+      total += p.preco * qtd;
+    }
+  }
+
+  const pedido = { order_id: "PED-" + Date.now(), total: total, items: items, forma_pagamento: forma };
+
+fetch('https://futuro-b32e6f57c219.herokuapp.com/pedido/salgadinho', {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(pedido)
+})
+
+  .then(resp=>{
+    if(resp.ok){
+      carrinho={};
+      atualizarCarrinho();
+      salvarEstoque();
+      alert(`✅ Pedido enviado (${forma.toUpperCase()})! Aperte o botão verde da máquina para continuar.`);
+    } else {
+      cancelarPedido();
+      alert("❌ Erro ao enviar pedido! Estoque restaurado.");
+    }
+  })
+  .catch(err=>{
+    cancelarPedido();
+    console.error("Erro no fetch:", err);
+  });
+
+  fecharOverlay();
+  resetTimerLimpeza();
+}
+
+function resetTimerLimpeza(){
+  if(timerLimpeza) clearTimeout(timerLimpeza);
+  timerLimpeza=setTimeout(()=>{
+    cancelarPedido();
+    console.log("Carrinho limpo por inatividade");
+  },180000);
+}
+
+// === Inicialização ===
+carregarEstoque();
+mostrarProdutos();
+</script>
+
+<div id="telaRepouso">
+  <h1>Clique na tela para comprar</h1>
+</div>
+
+<script>
+const telaRepouso = document.getElementById("telaRepouso");
+let timerInatividade;
+function mostrarTelaRepouso() { telaRepouso.classList.add("ativo"); }
+function esconderTelaRepouso() { telaRepouso.classList.remove("ativo"); reiniciarTimer(); }
+function reiniciarTimer() {
+  clearTimeout(timerInatividade);
+  timerInatividade = setTimeout(mostrarTelaRepouso, 3 * 60 * 1000);
+}
+['click', 'mousemove', 'keypress', 'touchstart', 'scroll'].forEach(evt => {
+  document.addEventListener(evt, esconderTelaRepouso);
+});
+mostrarTelaRepouso();
+</script>
+</body>
+</html>
