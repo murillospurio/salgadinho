@@ -151,11 +151,13 @@ h1 {
 #btnCredito { background-color: #28a745; }
 #btnPix { background-color: #ffc107; color: #000; }
 /* === Tela de repouso com carrossel === */
+
 #telaRepouso {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  background: radial-gradient(circle at center, rgba(0,102,204,0.7), rgba(0,0,50,0.95));
+  background: url('fundo.png') no-repeat center center fixed;
+  background-size: cover;
   display: none;
   flex-direction: column;
   justify-content: center;
@@ -166,28 +168,35 @@ h1 {
   pointer-events: none;
 }
 #telaRepouso.ativo { display: flex; pointer-events: all; }
+
 #carrosselEspera {
-  width: 90%;
-  height: 65%;
+  width: 85%;
+  height: 60%;
   overflow: hidden;
-  position: relative;
-  border-radius: 20px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.5);
-  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
+
 #slidesEspera {
   display: flex;
-  width: 100%;
-  height: 100%;
-  transition: transform 1s ease-in-out;
+  gap: 60px;
+  align-items: center;
+  transition: transform 0.2s linear;
 }
+
 #slidesEspera img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: 520px;
+  width: auto;
+  flex-shrink: 0;
+  border-radius: 15px;
+  box-shadow: none; /* remove sombra */
+  background: transparent; /* remove fundo */
 }
+
 #telaRepouso h1 {
   font-size: 60px;
+  margin-top: 40px;
   font-family: 'Arial Black', sans-serif;
   text-shadow: 0 0 25px rgba(255,255,255,0.8);
   background: linear-gradient(90deg, #a0ccdb, #9cb9e4);
