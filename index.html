@@ -182,7 +182,7 @@ h1 {
   display: flex;
   gap: 60px;
   align-items: center;
-  transition: transform 800ms linear;
+  transition: transform 0.2s linear;
 }
 
 #slidesEspera img {
@@ -429,7 +429,7 @@ listaLoop.forEach(p => {
 
 let pos = 0;
 function moverCarrossel() {
-  pos -= 1; // velocidade do deslocamento
+  pos -= 2; // velocidade do deslocamento
   if (Math.abs(pos) >= slidesEspera.scrollWidth / 2) {
     pos = 0; // reinicia de forma imperceptível
   }
