@@ -263,20 +263,21 @@ const ID_MAQUINA = 'salgadinho'; // << troque para 'salgadinho' no outro catálo
 const API_BASE = 'https://futuro-b32e6f57c219.herokuapp.com';
 
 /* ===== PRODUTOS ===== */
-const produtos = [
-  {id:1, nome:"Bis", preco:0.25, estoque:10, img:"produto_1.png"},
-  {id:2, nome:"Snickers", preco:0.50, estoque:20, img:"produto_2.png"},
-  {id:3, nome:"KitKat", preco:1.00, estoque:20, img:"produto_3.png"},
-  {id:4, nome:"Halls", preco:0.60, estoque:15, img:"produto_4.png"},
-  {id:5, nome:"Trident", preco:0.30, estoque:16, img:"produto_5.png"},
-  {id:6, nome:"Torcida Pimenta", preco:0.10, estoque:10, img:"produto_6.png"},
-  {id:7, nome:"Torcida Churrasco", preco:0.15, estoque:23, img:"produto_7.png"},
-  {id:8, nome:"Ovinho", preco:0.35, estoque:14, img:"produto_8.png"},
-  {id:9, nome:"Doritos", preco:0.45, estoque:16, img:"produto_9.png"},
-  {id:10, nome:"Rufles", preco:0.56, estoque:14, img:"produto_10.png"},
-  {id:11, nome:"Fandangos", preco:0.67, estoque:11, img:"produto_11.png"},
-  {id:12, nome:"Cheetos", preco:0.82, estoque:6, img:"produto_12.png"}
-];
+let produtos = []; // começa vazio
+
+async function carregarProdutos() {
+  try {
+    const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
+    if (!resp.ok) throw new Error("Erro ao carregar catálogo");
+    produtos = await resp.json(); // carrega do backend
+    mostrarProdutos(); // desenha os cards
+    destacarCentral(); // reativa destaque
+  } catch (e) {
+    console.error("❌ Falha ao carregar produtos:", e);
+    alert("Erro ao carregar produtos. Verifique conexão com o servidor.");
+  }
+}
+
 
 let carrinho = {};
 let timerLimpeza = null;
@@ -501,9 +502,13 @@ function resetTimerLimpeza(){
 }
 
 /* ===== INICIALIZAÇÃO ===== */
-carregarEstoque();
-mostrarProdutos();
-destacarCentral();
+(async () => {
+  carregarEstoque();          // mantém o estoque local
+  await carregarProdutos();   // busca os produtos do backend
+  destacarCentral();          // mantém o efeito de destaque
+  await montarCarrossel();    // monta o carrossel da tela de espera com as imagens novas
+})();
+
 </script>
 
 <!-- Tela de espera com carrossel -->
@@ -513,14 +518,17 @@ destacarCentral();
 </div>
 
 <script>
-const slidesEspera = document.getElementById('slidesEspera');
-const listaLoop = [...produtos, ...produtos];
-listaLoop.forEach(p => {
-  const img = document.createElement('img');
-  img.src = p.img;
-  img.alt = p.nome;
-  slidesEspera.appendChild(img);
-});
+async function montarCarrossel() {
+  const slidesEspera = document.getElementById('slidesEspera');
+  slidesEspera.innerHTML = ''; // limpa anterior
+  const listaLoop = [...produtos, ...produtos];
+  listaLoop.forEach(p => {
+    const img = document.createElement('img');
+    img.src = p.img;
+    img.alt = p.nome;
+    slidesEspera.appendChild(img);
+  });
+}
 
 let pos = 0;
 function moverCarrossel() {
@@ -530,6 +538,7 @@ function moverCarrossel() {
   requestAnimationFrame(moverCarrossel);
 }
 moverCarrossel();
+
 
 const telaRepouso=document.getElementById("telaRepouso");
 let timerInatividade;
