@@ -29,14 +29,13 @@ h1 {
   justify-content:flex-start;
   scrollbar-width:none;
 }
-
 #produtos::before,
 #produtos::after {
   content: "";
-  flex: 0 0 25%; /* define o espaço de borda */
+  flex: 0 0 25%;
 }
-
 #produtos::-webkit-scrollbar { display:none; }
+
 .produto {
   flex:0 0 450px;
   height:850px;
@@ -65,6 +64,7 @@ h1 {
   font-size:32px;
 }
 .produto button:hover { background-color:#0056b3; }
+
 .produto.central {
   transform: scale(1.12);
   opacity: 1;
@@ -85,7 +85,6 @@ h1 {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: auto;
   background: rgba(255,255,255,0.60);
   display: flex;
   flex-direction: column;
@@ -99,22 +98,14 @@ h1 {
   border-top-right-radius: 10px;
 }
 .carrinho img { width: 100px; height: 100px; margin: 0; }
-#itensCarrinho {
-  flex-grow: 1;
-  overflow-x: auto;
-  white-space: nowrap;
-  padding: 0 10px;
-  font-size: 26px;
-}
+#itensCarrinho { flex-grow: 1; overflow-x: auto; white-space: nowrap; padding: 0 10px; font-size: 26px; }
 .carrinho button {
-  display: flex;
   width: 100%;
-  flex-direction: column;
-  gap: 10px; 
   padding: 16px 22px;
   font-size: 30px;
   border-radius: 6px;
   margin: 10px;
+  border: none;
 }
 
 /* Overlay */
@@ -126,16 +117,15 @@ h1 {
   color:#fff;
   z-index:9999;
   text-align:center;
-  box-sizing:border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.5s;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.5s;
 }
-#overlay.show { opacity: 1; pointer-events: all; }
+#overlay.show { opacity:1; pointer-events:all; }
 #overlay h2 { margin-bottom:20px; font-size:35px; }
 #overlay div { margin-bottom:15px; font-size:35px; }
 #overlay button {
@@ -147,29 +137,35 @@ h1 {
   background-color:#007bff;
   border:none;
   color:#fff;
-  transition: background 0.3s;
 }
 #overlay button:hover { background-color:#0056b3; }
 
 /* Opções de pagamento */
-#pagamentoOpcoes {
+#pagamentoOpcoes { display:none; flex-direction:column; gap:15px; margin-top:20px; }
+#pagamentoOpcoes button { font-size:36px; padding:40px; border-radius:10px; border:none; cursor:pointer; color:white; font-weight:bold; }
+#btnDebito { background-color:#007bff; }
+#btnCredito { background-color:#28a745; }
+#btnPix { background-color:#ffc107; color:#000; }
+
+/* Tela de status (mensagens de pedido) */
+#telaStatus {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  color: white;
   display: none;
   flex-direction: column;
-  gap: 15px;
-  margin-top: 20px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 10000;
 }
-#pagamentoOpcoes button {
-  font-size: 36px;
-  padding: 40px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  color: white;
-  font-weight: bold;
+#telaStatus img {
+  width: 350px;
+  height: auto;
+  margin-top: 30px;
 }
-#btnDebito { background-color: #007bff; }
-#btnCredito { background-color: #28a745; }
-#btnPix { background-color: #ffc107; color: #000; }
 
 /* Tela de repouso */
 #telaRepouso {
@@ -187,7 +183,7 @@ h1 {
   color: white;
   pointer-events: none;
 }
-#telaRepouso.ativo { display: flex; pointer-events: all; }
+#telaRepouso.ativo { display:flex; pointer-events:all; }
 #carrosselEspera {
   width: 85%;
   height: 60%;
@@ -205,10 +201,7 @@ h1 {
 #slidesEspera img {
   height: 520px;
   width: auto;
-  flex-shrink: 0;
   border-radius: 15px;
-  box-shadow: none;
-  background: transparent;
 }
 #telaRepouso h1 {
   font-size: 60px;
@@ -251,316 +244,59 @@ h1 {
   <img id="imgStatus" src="" style="display:none;">
 </div>
 
-<!-- Tela de repouso -->
+<!-- Tela de repouso com carrossel -->
 <div id="telaRepouso">
   <div id="carrosselEspera"><div id="slidesEspera"></div></div>
   <h1>🛒 Clique na tela para comprar</h1>
 </div>
 
 <script>
-/* ===== CONFIG ===== */
-const ID_MAQUINA = 'salgadinho'; // << troque para 'salgadinho' no outro catálogo
+const ID_MAQUINA = 'salgadinho';
 const API_BASE = 'https://futuro-b32e6f57c219.herokuapp.com';
-
-/* ===== PRODUTOS ===== */
-let produtos = []; // começa vazio
-
-async function carregarProdutos() {
-  try {
-    const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
-    if (!resp.ok) throw new Error("Erro ao carregar catálogo");
-    produtos = await resp.json(); // carrega do backend
-    mostrarProdutos(); // desenha os cards
-    destacarCentral(); // reativa destaque
-  } catch (e) {
-    console.error("❌ Falha ao carregar produtos:", e);
-    alert("Erro ao carregar produtos. Verifique conexão com o servidor.");
-  }
-}
-
-
+let produtos = [];
 let carrinho = {};
 let timerLimpeza = null;
 
-/* ===== ESTOQUE LOCAL ===== */
-function salvarEstoque() { localStorage.setItem("estoqueAtual_"+ID_MAQUINA, JSON.stringify(produtos)); }
-function carregarEstoque() {
-  const salvo = localStorage.getItem("estoqueAtual_"+ID_MAQUINA);
-  if (salvo) {
-    const produtosSalvos = JSON.parse(salvo);
-    produtos.forEach((p, i) => { if (produtosSalvos[i]) p.estoque = produtosSalvos[i].estoque; });
-  }
+/* === carregar produtos === */
+async function carregarProdutos() {
+  try {
+    const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
+    produtos = await resp.json();
+    mostrarProdutos();
+    destacarCentral();
+  } catch(e){ alert("Erro ao carregar produtos"); }
 }
 
-/* ===== UI PRODUTOS ===== */
+/* === mostrar produtos === */
 function mostrarProdutos() {
-  const div = document.getElementById('produtos');
+  const div=document.getElementById('produtos');
   div.innerHTML='';
   produtos.forEach(p=>{
-    const prodDiv=document.createElement('div');
-    prodDiv.className='produto';
-    prodDiv.innerHTML=`
+    const el=document.createElement('div');
+    el.className='produto';
+    el.innerHTML=`
       <img src="${p.img}" alt="${p.nome}">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
-        <button onclick="alterarQuantidade(${p.id}, -1)">-</button>
+        <button onclick="alterarQuantidade(${p.id},-1)">-</button>
         <span id="qtd-${p.id}">0</span>
-        <button onclick="alterarQuantidade(${p.id}, 1)">+</button>
+        <button onclick="alterarQuantidade(${p.id},1)">+</button>
       </div>`;
-    div.appendChild(prodDiv);
+    div.appendChild(el);
   });
 }
 
-/* ===== DESTACAR CENTRAL ===== */
-function destacarCentral() {
-  const container = document.getElementById('produtos');
-  function atualizarCentral() {
-    const cards = [...document.querySelectorAll('.produto')];
-    const meio = container.scrollLeft + container.offsetWidth / 2;
-    let central = null, menor = Infinity;
-    cards.forEach(p => {
-      const c = p.offsetLeft + p.offsetWidth/2;
-      const d = Math.abs(meio - c);
-      if (d < menor) { menor = d; central = p; }
-    });
-    cards.forEach(p => p.classList.remove('central'));
-    if (central) central.classList.add('central');
-  }
-  container.addEventListener('scroll', atualizarCentral);
-  atualizarCentral();
+/* === confirmar pedido === */
+async function confirmarComForma(forma){
+  const tela=document.getElementById("telaStatus");
+  const texto=document.getElementById("textoStatus");
+  const img=document.getElementById("imgStatus");
+  // mostra a tela preta de status
+  tela.style.display="flex";
+  texto.innerText="✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
+  img.src="maquininha.png";
+  img.style.display="block";
 }
-
-/* ===== QUANTIDADE / CARRINHO ===== */
-function alterarQuantidade(id, delta) {
-  const produto = produtos.find(p => p.id === id);
-  if (!carrinho[id]) carrinho[id] = 0;
-
-  let novaQtd = carrinho[id] + delta;
-  if (novaQtd < 0) novaQtd = 0;
-  if (novaQtd > produto.estoque) novaQtd = produto.estoque;
-
-  carrinho[id] = novaQtd;
-
-  document.getElementById(`qtd-${id}`).innerText = novaQtd;
-  document.getElementById(`estoque-${id}`).innerText = produto.estoque - novaQtd;
-
-  atualizarCarrinho();
-  resetTimerLimpeza();
-}
-
-function atualizarCarrinho() {
-  const div=document.getElementById('itensCarrinho');
-  div.innerHTML='';
-  let total=0; let vazio=true;
-  for(let id in carrinho){
-    if(carrinho[id]>0){
-      vazio=false;
-      const p=produtos.find(prod=>prod.id==id);
-      total+=p.preco*carrinho[id];
-      div.innerHTML += `${p.nome} x ${carrinho[id]} = R$ ${(p.preco*carrinho[id]).toFixed(2)}<br>`;
-    }
-  }
-  if(vazio) div.innerHTML='Vazio';
-  document.getElementById('total').innerText=total.toFixed(2);
-}
-
-function cancelarPedido() {
-  for (let id in carrinho) {
-    document.getElementById(`qtd-${id}`).innerText = "0";
-    const produto = produtos.find(p => p.id == id);
-    document.getElementById(`estoque-${id}`).innerText = produto.estoque;
-  }
-  carrinho = {};
-  atualizarCarrinho();
-  resetTimerLimpeza();
-}
-
-/* ===== OVERLAY (VER PEDIDO) ===== */
-const overlay = document.getElementById('overlay');
-const overlayItens = document.getElementById('overlayItens');
-
-document.getElementById('verPedidoBtn').addEventListener('click', ()=>{
-  overlayItens.innerHTML='';
-  let total=0; let vazio=true;
-  for(let id in carrinho){
-    const qtd = carrinho[id];
-    if(qtd>0){
-      vazio=false;
-      const p = produtos.find(x=>x.id==id);
-      total += p.preco*qtd;
-      overlayItens.innerHTML += `${p.nome} x ${qtd} = R$ ${(p.preco*qtd).toFixed(2)}<br>`;
-    }
-  }
-  if(vazio) overlayItens.innerHTML='Carrinho vazio!';
-  else overlayItens.innerHTML += `<br><b>Total: R$ ${total.toFixed(2)}</b>`;
-  document.getElementById('pagamentoOpcoes').style.display = 'flex';
-  overlay.classList.add('show');
-});
-
-function fecharOverlay(){
-  overlay.classList.remove('show');
-  document.getElementById('pagamentoOpcoes').style.display='none';
-}
-
-async function confirmarComForma(forma) {
-  const items = [];
-  let total = 0;
-  for (let id in carrinho) {
-    const qtd = carrinho[id];
-    if (qtd > 0) {
-      const p = produtos.find(prod => prod.id == id);
-      items.push({ id: p.id, name: p.nome.toLowerCase().replace(/\s/g, "_"), qty: qtd });
-      total += p.preco * qtd;
-    }
-  }
-
-  if (items.length === 0) {
-    alert('Carrinho vazio!');
-    return;
-  }
-
-  const payload = {
-    order_id: "PED-" + Date.now(),
-    total: Number(total.toFixed(2)),
-    items: items,
-    forma_pagamento: forma
-  };
-
-  const tela = document.getElementById("telaStatus");
-  const texto = document.getElementById("textoStatus");
-  const img = document.getElementById("imgStatus");
-
-  try {
-    // === Envia o pedido para o Flask ===
-    const resp = await fetch(`${API_BASE}/pedido/${ID_MAQUINA}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      cancelarPedido();
-      fecharOverlay();
-      alert("❌ Erro ao enviar pedido. Tente novamente.");
-      return;
-    }
-
-    // === Se for PIX e o backend devolveu QR Code ===
-    if (forma === "pix" && data.qr_base64) {
-      document.getElementById("overlayItens").innerHTML = `
-        <p>Escaneie o QR Code abaixo para pagar:</p>
-        <img src="data:image/png;base64,${data.qr_base64}" style="width:400px;height:400px;">
-      `;
-      document.getElementById("pagamentoOpcoes").style.display = "none";
-      return; // mantém o QR na tela até pagamento ser feito
-    }
-
-    // === Se for débito ou crédito ===
-    fecharOverlay();
-
-    // Mostra tela preta com maquininha
-    tela.style.display = "flex";
-    texto.innerText = "✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
-    img.src = "maquininha.png";
-    img.style.display = "block";
-
-    // === Aguardar liberação real do ESP via Flask ===
-    aguardarEntrega(tela, texto, img);
-
-  } catch (e) {
-    console.error(e);
-    cancelarPedido();
-    fecharOverlay();
-    alert("❌ Falha de conexão. Verifique a internet.");
-  }
-}
-
-async function aguardarEntrega(tela,texto,img){
-  let tentativas=0;
-  const intervalo=setInterval(async()=>{
-    const r=await fetch(`${API_BASE}/status_pagamento/${ID_MAQUINA}`);
-    const data=await r.json();
-    if(data.status==="entregue"){
-      clearInterval(intervalo);
-      texto.innerText="✅ Obrigado, volte sempre!";
-      img.style.display="none";
-      setTimeout(()=>{
-        tela.style.display="none";
-        document.getElementById("telaRepouso").classList.add("ativo");
-      },5000);
-    }
-    tentativas++;
-    if(tentativas>90){ clearInterval(intervalo); } // timeout 3min
-  },2000);
-}
-
-/* ===== LIMPEZA POR INATIVIDADE ===== */
-function resetTimerLimpeza(){
-  if(timerLimpeza) clearTimeout(timerLimpeza);
-  timerLimpeza=setTimeout(()=>{ cancelarPedido(); },180000);
-}
-
-/* ===== INICIALIZAÇÃO ===== */
-(async () => {
-  carregarEstoque();          // mantém o estoque local
-  await carregarProdutos();   // busca os produtos do backend
-  destacarCentral();          // mantém o efeito de destaque
-  await montarCarrossel();    // monta o carrossel da tela de espera com as imagens novas
-})();
-
-</script>
-
-<!-- Tela de espera com carrossel -->
-<div id="telaRepouso">
-  <div id="carrosselEspera"><div id="slidesEspera"></div></div>
-  <h1>🛒 Clique na tela para comprar</h1>
-</div>
-
-<script>
-async function montarCarrossel() {
-  const slidesEspera = document.getElementById('slidesEspera');
-  slidesEspera.innerHTML = ''; // limpa anterior
-  const listaLoop = [...produtos, ...produtos];
-  listaLoop.forEach(p => {
-    const img = document.createElement('img');
-    img.src = p.img;
-    img.alt = p.nome;
-    slidesEspera.appendChild(img);
-  });
-}
-
-let pos = 0;
-function moverCarrossel() {
-  pos -= 3.5;
-  if (Math.abs(pos) >= slidesEspera.scrollWidth / 2) pos = 0;
-  slidesEspera.style.transform = `translateX(${pos}px)`;
-  requestAnimationFrame(moverCarrossel);
-}
-moverCarrossel();
-
-
-const telaRepouso=document.getElementById("telaRepouso");
-let timerInatividade;
-function mostrarTelaRepouso(){telaRepouso.classList.add("ativo");}
-async function esconderTelaRepouso(){
-  telaRepouso.classList.remove("ativo");
-  reiniciarTimer();
-
-  // 🆕 Recarrega catálogo sempre que sair da tela de repouso
-  await carregarProdutos();
-  atualizarCarrinho();
-}
-
-function reiniciarTimer(){
-  clearTimeout(timerInatividade);
-  timerInatividade=setTimeout(mostrarTelaRepouso,3*60*1000);
-}
-['click','mousemove','keypress','touchstart','scroll'].forEach(evt=>{
-  document.addEventListener(evt,esconderTelaRepouso);
-});
-telaRepouso.addEventListener('click',()=>{esconderTelaRepouso();});
-mostrarTelaRepouso();
 </script>
 </body>
 </html>
