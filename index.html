@@ -277,9 +277,13 @@ function mostrarProdutos() {
   produtos.forEach(p => {
     const el = document.createElement('div');
     el.className = 'produto';
+
+    const imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+
    el.innerHTML = `
-      <img src="${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img.split('/').pop()}" alt="${p.nome}">
-      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: <span id="estoque-${p.id}">${p.estoque}</span></div>
+      <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
+      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: 
+      <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
         <button onclick="alterarQuantidade(${p.id},-1)">-</button>
         <span id="qtd-${p.id}">0</span>
@@ -289,7 +293,12 @@ function mostrarProdutos() {
   });
 }
 
-carregarProdutos();
+function alterarQuantidade(id, delta) {
+  const qtdEl = document.getElementById(`qtd-${id}`);
+  let nova = parseInt(qtdEl.textContent) + delta;
+  if (nova < 0) nova = 0;
+  qtdEl.textContent = nova;
+}
 
 /* === confirmar pedido === */
 async function confirmarComForma(forma){
@@ -302,6 +311,9 @@ async function confirmarComForma(forma){
   img.src="maquininha.png";
   img.style.display="block";
 }
+
+carregarProdutos();
+
 </script>
 </body>
 </html>
