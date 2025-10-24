@@ -277,25 +277,19 @@ function mostrarProdutos() {
   produtos.forEach(p => {
     const el = document.createElement('div');
     el.className = 'produto';
-    
-    // Corrige automaticamente o caminho da imagem
-    const imgPath = p.img.startsWith('salgadinho/') || p.img.startsWith('refrigerante/')
-      ? `${API_BASE}/static/uploads/${p.img}`
-      : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-    
-    el.innerHTML = `
-      <img src="${imgPath}" alt="${p.nome}">
+   el.innerHTML = `
+      <img src="${API_BASE}/static/uploads/${p.img}" alt="${p.nome}">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
-        <button onclick="alterarQuantidade(${p.id}, -1)">-</button>
+        <button onclick="alterarQuantidade(${p.id},-1)">-</button>
         <span id="qtd-${p.id}">0</span>
-        <button onclick="alterarQuantidade(${p.id}, 1)">+</button>
+        <button onclick="alterarQuantidade(${p.id},1)">+</button>
       </div>`;
-    
     div.appendChild(el);
   });
 }
 
+carregarProdutos();
 
 /* === confirmar pedido === */
 async function confirmarComForma(forma){
