@@ -262,7 +262,7 @@ async function carregarProdutos() {
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
-    console.log("Produtos carregados:", produtos);
+    console.log("Resposta do servidor:", produtos);
     mostrarProdutos();
     destacarCentral();
  } catch(e){
@@ -278,7 +278,7 @@ function mostrarProdutos() {
     const el = document.createElement('div');
     el.className = 'produto';
    el.innerHTML = `
-      <img src="${API_BASE}/static/uploads/${p.img}" alt="${p.nome}">
+      <img src="${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img.split('/').pop()}" alt="${p.nome}">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
         <button onclick="alterarQuantidade(${p.id},-1)">-</button>
