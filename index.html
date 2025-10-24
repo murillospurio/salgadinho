@@ -264,7 +264,6 @@ async function carregarProdutos() {
     produtos = await resp.json();
     console.log("Resposta do servidor:", produtos);
     mostrarProdutos();
-    destacarCentral();
  } catch(e){
     console.error("Erro ao carregar produtos:", e);
     alert("Erro ao carregar produtos");
