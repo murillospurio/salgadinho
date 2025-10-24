@@ -277,9 +277,8 @@ function mostrarProdutos() {
     const el = document.createElement('div');
     el.className = 'produto';
 
-    const imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-
    el.innerHTML = `
+   <img src="${API_BASE}/static/uploads/${p.img}" alt="${p.nome}">
       <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: 
       <span id="estoque-${p.id}">${p.estoque}</span></div>
