@@ -51,7 +51,15 @@ h1 {
   padding:12px;
   box-sizing:border-box;
 }
-.produto img { width:auto; height:400px; object-fit:contain; }
+.produto img {
+  width:auto;
+  height:400px;
+  object-fit:contain;
+  transition: transform 0.3s ease;
+}
+.produto img:hover {
+  transform: scale(1.08);
+}
 .produto div { font-size:32px; }
 .produto button {
   padding:22px 28px;
@@ -269,6 +277,7 @@ async function carregarProdutos() {
     alert("Erro ao carregar produtos");
   }
 }
+
 /* === mostrar produtos === */
 function mostrarProdutos() {
   const div = document.getElementById('produtos');
@@ -277,10 +286,12 @@ function mostrarProdutos() {
     const el = document.createElement('div');
     el.className = 'produto';
 
-   el.innerHTML = `
-   <img src="${API_BASE}/static/uploads/${p.img}" alt="${p.nome}">
+    // Caminho correto da imagem
+    const imgPath = `${API_BASE}/static/uploads/${p.img}`;
+
+    el.innerHTML = `
       <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
-      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: 
+      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
       <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
         <button onclick="alterarQuantidade(${p.id},-1)">-</button>
@@ -291,6 +302,7 @@ function mostrarProdutos() {
   });
 }
 
+/* === alterar quantidade === */
 function alterarQuantidade(id, delta) {
   const qtdEl = document.getElementById(`qtd-${id}`);
   let nova = parseInt(qtdEl.textContent) + delta;
@@ -303,7 +315,6 @@ async function confirmarComForma(forma){
   const tela=document.getElementById("telaStatus");
   const texto=document.getElementById("textoStatus");
   const img=document.getElementById("imgStatus");
-  // mostra a tela preta de status
   tela.style.display="flex";
   texto.innerText="✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
   img.src="maquininha.png";
@@ -311,7 +322,6 @@ async function confirmarComForma(forma){
 }
 
 carregarProdutos();
-
 </script>
 </body>
 </html>
