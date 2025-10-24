@@ -275,7 +275,7 @@ function mostrarProdutos() {
     const el=document.createElement('div');
     el.className='produto';
     el.innerHTML=`
-      <img src="${p.img}" alt="${p.nome}">
+      <img src="${API_BASE}/static/uploads/${p.img}" alt="${p.nome}">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque: <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
         <button onclick="alterarQuantidade(${p.id},-1)">-</button>
