@@ -262,11 +262,14 @@ async function carregarProdutos() {
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
+    console.log("Produtos carregados:", produtos);
     mostrarProdutos();
     destacarCentral();
-  } catch(e){ alert("Erro ao carregar produtos"); }
+ } catch(e){
+    console.error("Erro ao carregar produtos:", e);
+    alert("Erro ao carregar produtos");
+  }
 }
-
 /* === mostrar produtos === */
 function mostrarProdutos() {
   const div = document.getElementById('produtos');
