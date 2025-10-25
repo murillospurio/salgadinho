@@ -346,96 +346,77 @@ let pos = 0;
 let animacaoCarrossel = null;
 let timerInatividade = null;
 
-// === INICIAR TELA DE REPOUSO ===
-async function iniciarTelaRepouso() {
-  console.log("🟢 Entrando na tela de repouso...");
-  const telaRepouso = document.getElementById("telaRepouso");
-  const produtosDiv = document.getElementById("produtos");
-  const carrinhoDiv = document.querySelector(".carrinho");
-  const slides = document.getElementById("slidesEspera");
+// ==================== TELA DE REPOUSO / CARROSSEL ====================
+let slideIndex = 0;
+let timerCarrossel = null;
+let timerInatividade = null;
 
-  // Oculta catálogo e carrinho
+function resolveImgPath(p) {
+  // Garante caminho correto da imagem
+  if (!p.img) return "";
+  if (p.img.startsWith("http")) return p.img;
+  if (p.img.includes("/")) return `${API_BASE}/static/uploads/${p.img}`;
+  return `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+}
+
+async function entrarTelaRepouso() {
+  const tela = document.getElementById("telaRepouso");
+  const slides = document.getElementById("slidesEspera");
+  const produtosDiv = document.getElementById("produtos");
+
+  tela.classList.add("ativo");
   produtosDiv.style.display = "none";
-  if (carrinhoDiv) carrinhoDiv.style.display = "none";
-  telaRepouso.style.display = "flex";
+  slides.innerHTML = "";
 
   try {
-    // 🔹 Pega os produtos diretamente do Flask
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     const produtos = await resp.json();
 
-    slides.innerHTML = "";
-
-    if (!produtos || produtos.length === 0) {
-      slides.innerHTML = "<p style='color:white;font-size:40px;'>Catálogo vazio</p>";
-      return;
-    }
-
-    // 🔹 Duplica imagens pra loop infinito
-    const listaLoop = [...produtos, ...produtos];
-    listaLoop.forEach(p => {
+    produtos.forEach(p => {
       const img = document.createElement("img");
-      img.src = p.img.startsWith("http") ? p.img : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+      img.src = resolveImgPath(p);
       img.alt = p.nome;
+      img.onerror = () => (img.style.display = "none");
       slides.appendChild(img);
     });
 
-    // 🔹 Reinicia rolagem
-    pos = 0;
-    if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
-    moverCarrossel();
-
-  } catch (e) {
-    console.error("❌ Erro ao carregar carrossel:", e);
+    // Reinicia carrossel (mudança a cada 7s)
+    slideIndex = 0;
+    clearInterval(timerCarrossel);
+    timerCarrossel = setInterval(() => moverCarrossel(produtos.length), 7000);
+  } catch (err) {
+    console.error("Erro ao carregar carrossel:", err);
   }
 }
 
-// === ANIMAÇÃO DO CARROSSEL ===
-function moverCarrossel() {
+function moverCarrossel(qtd) {
   const slides = document.getElementById("slidesEspera");
-  if (!slides || slides.children.length === 0) return;
-  pos -= 2; // velocidade (2 = médio)
-  if (Math.abs(pos) >= slides.scrollWidth / 2) pos = 0;
-  slides.style.transform = `translateX(${pos}px)`;
-  animacaoCarrossel = requestAnimationFrame(moverCarrossel);
+  if (!slides.children.length) return;
+  slideIndex = (slideIndex + 1) % qtd;
+  slides.style.transition = "transform 1.5s ease";
+  slides.style.transform = `translateX(-${slideIndex * 100}%)`;
 }
 
-// === SAIR DA TELA DE REPOUSO ===
-async function sairDaTelaRepouso() {
-  console.log("🔵 Saindo da tela de repouso...");
-  const telaRepouso = document.getElementById("telaRepouso");
+function sairTelaRepouso() {
+  const tela = document.getElementById("telaRepouso");
   const produtosDiv = document.getElementById("produtos");
-  const carrinhoDiv = document.querySelector(".carrinho");
-
-  telaRepouso.style.display = "none";
+  tela.classList.remove("ativo");
+  tela.style.display = "none";
   produtosDiv.style.display = "flex";
-  if (carrinhoDiv) carrinhoDiv.style.display = "flex";
-
-  if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
-
-  await carregarProdutos();
-  destacarCentral();
+  clearInterval(timerCarrossel);
+  carregarProdutos();
   iniciarTimerInatividade();
 }
 
-// === VOLTAR AO REPOUSO APÓS INATIVIDADE ===
 function iniciarTimerInatividade() {
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(() => iniciarTelaRepouso(), 60000); // 1 min
+  timerInatividade = setTimeout(entrarTelaRepouso, 60000);
 }
 
-// === EVENTOS DE CLIQUE / MOVIMENTO ===
 window.addEventListener("DOMContentLoaded", () => {
-  const telaRepouso = document.getElementById("telaRepouso");
-  if (telaRepouso) {
-    telaRepouso.addEventListener("click", sairDaTelaRepouso);
-  }
-
-  ["click", "mousemove", "keypress", "touchstart"].forEach(evt => {
-    document.addEventListener(evt, () => iniciarTimerInatividade());
-  });
-
-  iniciarTelaRepouso(); // inicia na tela de espera
+  const tela = document.getElementById("telaRepouso");
+  tela.addEventListener("click", sairTelaRepouso);
+  entrarTelaRepouso(); // entra no modo repouso ao carregar
 });
 
 
