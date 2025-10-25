@@ -346,16 +346,18 @@ let slideIndex = 0;
 let timerCarrossel = null;
 
 async function iniciarTelaRepouso() {
-  document.getElementById("telaRepouso").style.display = "flex";
-  document.getElementById("produtos").style.display = "none";
+  const telaRepouso = document.getElementById("telaRepouso");
+  const produtosDiv = document.getElementById("produtos");
+  const slides = document.getElementById("slidesEspera");
 
+  telaRepouso.style.display = "flex";
+  produtosDiv.style.display = "none";
   // Carregar catálogo de produtos para o carrossel
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     const produtos = await resp.json();
 
-    const slides = document.getElementById("slidesEspera");
-    slides.innerHTML = "";
+     slides.innerHTML = "";
 
     // Criar imagens para o carrossel
     produtos.forEach(p => {
@@ -379,12 +381,17 @@ async function iniciarTelaRepouso() {
 function moverCarrossel(qtd) {
   slideIndex = (slideIndex + 1) % qtd;
   const slides = document.getElementById("slidesEspera");
+  slides.style.transition = "transform 1.5s ease-in-out"; // transição mais suave
   slides.style.transform = `translateX(-${slideIndex * 100}%)`;
 }
 
 function sairDaTelaRepouso() {
-  document.getElementById("telaRepouso").style.display = "none";
-  document.getElementById("produtos").style.display = "flex";
+  const telaRepouso = document.getElementById("telaRepouso");
+  const produtosDiv = document.getElementById("produtos");
+
+  telaRepouso.style.display = "none";
+  produtosDiv.style.display = "flex";
+
   clearInterval(timerCarrossel);
   carregarProdutos();
   iniciarTimerInatividade();
@@ -396,10 +403,14 @@ function iniciarTimerInatividade() {
   timerLimpeza = setTimeout(() => iniciarTelaRepouso(), 60000);
 }
 
-// clique na tela para sair do repouso
-document.getElementById("telaRepouso").addEventListener("click", sairDaTelaRepouso);
+window.addEventListener("DOMContentLoaded", () => {
+  const telaRepouso = document.getElementById("telaRepouso");
+  if (telaRepouso) {
+    telaRepouso.addEventListener("click", sairDaTelaRepouso);
+  }
+});
 
-// inicia no modo repouso ao abrir
+// Inicia no modo repouso ao abrir
 iniciarTelaRepouso();
 
 </script>
