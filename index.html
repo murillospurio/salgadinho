@@ -313,11 +313,60 @@ function mostrarProdutos() {
 
 /* === alterar quantidade === */
 function alterarQuantidade(id, delta) {
-  const qtdEl = document.getElementById(`qtd-${id}`);
-  let nova = parseInt(qtdEl.textContent) + delta;
-  if (nova < 0) nova = 0;
-  qtdEl.textContent = nova;
+  const produto = produtos.find(p => p.id === id);
+  if (!produto) return;
+
+  // inicializa o carrinho se ainda não existir o item
+  if (!carrinho[id]) carrinho[id] = 0;
+
+  // aplica a alteração de quantidade
+  carrinho[id] += delta;
+  if (carrinho[id] < 0) carrinho[id] = 0;
+  if (carrinho[id] > produto.estoque) carrinho[id] = produto.estoque;
+
+  // atualiza visualmente
+  document.getElementById(`qtd-${id}`).textContent = carrinho[id];
+  document.getElementById(`estoque-${id}`).textContent = produto.estoque - carrinho[id];
+
+  // atualiza a soma e o resumo do carrinho
+  atualizarCarrinho();
 }
+
+/* === atualizar carrinho === */
+function atualizarCarrinho() {
+  const divCarrinho = document.getElementById('itensCarrinho');
+  let total = 0;
+  let vazio = true;
+
+  divCarrinho.innerHTML = '';
+  for (let id in carrinho) {
+    const qtd = carrinho[id];
+    if (qtd > 0) {
+      vazio = false;
+      const p = produtos.find(prod => prod.id == id);
+      const subtotal = p.preco * qtd;
+      total += subtotal;
+      divCarrinho.innerHTML += `${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
+    }
+  }
+
+  if (vazio) divCarrinho.innerHTML = 'Vazio';
+  document.getElementById('total').textContent = total.toFixed(2);
+}
+
+/* === cancelar pedido === */
+function cancelarPedido() {
+  for (let id in carrinho) {
+    carrinho[id] = 0;
+    const produto = produtos.find(p => p.id == id);
+    if (produto) {
+      document.getElementById(`qtd-${id}`).textContent = "0";
+      document.getElementById(`estoque-${id}`).textContent = produto.estoque;
+    }
+  }
+  atualizarCarrinho();
+}
+
 
 /* === confirmar pedido === */
 async function confirmarComForma(forma){
