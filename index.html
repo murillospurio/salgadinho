@@ -484,6 +484,32 @@ async function confirmarComForma(forma) {
     fecharOverlay();
   }
 }
+// === Aguarda o ESP confirmar entrega do produto ===
+async function aguardarEntrega(tela, texto, img) {
+  let tentativas = 0;
+  const intervalo = setInterval(async () => {
+    try {
+      const r = await fetch(`${API_BASE}/status_pagamento/${ID_MAQUINA}`);
+      const data = await r.json();
+
+      if (data.status === "entregue") {
+        clearInterval(intervalo);
+        texto.innerText = "✅ Obrigado, volte sempre!";
+        img.style.display = "none";
+        setTimeout(() => {
+          tela.style.display = "none";
+          document.getElementById("telaRepouso").classList.add("ativo");
+        }, 5000);
+      }
+
+      tentativas++;
+      if (tentativas > 90) clearInterval(intervalo); // timeout após 3 minutos
+    } catch (err) {
+      console.error("Erro verificando status:", err);
+    }
+  }, 2000);
+}
+
 
 const produtosDiv = document.getElementById('produtos');
 produtosDiv.addEventListener('scroll', () => {
