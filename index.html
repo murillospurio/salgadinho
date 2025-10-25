@@ -405,14 +405,26 @@ function moverCarrossel() {
 async function sairDaTelaRepouso() {
   const telaRepouso = document.getElementById("telaRepouso");
   const produtosDiv = document.getElementById("produtos");
+  const carrinhoDiv = document.querySelector(".carrinho");
 
+  // 🔹 garante que a tela de repouso realmente some
   telaRepouso.style.display = "none";
-  produtosDiv.style.display = "flex";
+  telaRepouso.classList.remove("ativo");
 
+  // 🔹 reativa catálogo e carrinho
+  produtosDiv.style.display = "flex";
+  if (carrinhoDiv) carrinhoDiv.style.display = "flex";
+
+  // 🔹 cancela carrossel e recarrega catálogo
   if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
-  await carregarProdutos();
-  iniciarTimerInatividade();
+
+  await carregarProdutos();     // garante que pega os novos produtos do Flask
+  destacarCentral();            // volta o destaque pro item do meio
+  iniciarTimerInatividade();    // reinicia o cronômetro de repouso
+
+  console.log("🟢 Tela de repouso encerrada — catálogo reativado.");
 }
+
 
 // === Timer de inatividade ===
 function iniciarTimerInatividade() {
