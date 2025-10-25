@@ -341,23 +341,22 @@ produtosDiv.addEventListener('scroll', () => {
   });
 });
 
-/* ======== TELA DE REPOUSO E CARROSSEL ======== */
-let pos = 0;
-let animacaoCarrossel = null;
-let timerInatividade = null;
+function resolveImgPath(p) {
+  // Retorna direto o link Cloudinary se já for completo
+  if (p.img && p.img.startsWith("http")) return p.img;
 
-// ==================== TELA DE REPOUSO / CARROSSEL ====================
+  // Caso seja um nome antigo (sem link completo), monta o caminho local
+  if (p.img && p.img.includes("/"))
+    return `${API_BASE}/static/uploads/${p.img}`;
+  if (p.img)
+    return `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+
+  return ""; // fallback vazio se não tiver imagem
+}
+
 let slideIndex = 0;
 let timerCarrossel = null;
 let timerInatividade = null;
-
-function resolveImgPath(p) {
-  // Garante caminho correto da imagem
-  if (!p.img) return "";
-  if (p.img.startsWith("http")) return p.img;
-  if (p.img.includes("/")) return `${API_BASE}/static/uploads/${p.img}`;
-  return `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-}
 
 async function entrarTelaRepouso() {
   const tela = document.getElementById("telaRepouso");
@@ -365,6 +364,7 @@ async function entrarTelaRepouso() {
   const produtosDiv = document.getElementById("produtos");
 
   tela.classList.add("ativo");
+  tela.style.display = "flex";
   produtosDiv.style.display = "none";
   slides.innerHTML = "";
 
@@ -372,17 +372,22 @@ async function entrarTelaRepouso() {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     const produtos = await resp.json();
 
+    // Adiciona imagens ao carrossel
     produtos.forEach(p => {
       const img = document.createElement("img");
       img.src = resolveImgPath(p);
       img.alt = p.nome;
       img.onerror = () => (img.style.display = "none");
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.objectFit = "contain"; // centraliza e mantém proporção
       slides.appendChild(img);
     });
 
-    // Reinicia carrossel (mudança a cada 7s)
+    // Reinicia o carrossel (mudança a cada 7 segundos)
     slideIndex = 0;
     clearInterval(timerCarrossel);
+    moverCarrossel(produtos.length); // mostra primeira imagem
     timerCarrossel = setInterval(() => moverCarrossel(produtos.length), 7000);
   } catch (err) {
     console.error("Erro ao carregar carrossel:", err);
@@ -410,15 +415,14 @@ function sairTelaRepouso() {
 
 function iniciarTimerInatividade() {
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(entrarTelaRepouso, 60000);
+  timerInatividade = setTimeout(entrarTelaRepouso, 60000); // volta pra tela após 1min
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   const tela = document.getElementById("telaRepouso");
   tela.addEventListener("click", sairTelaRepouso);
-  entrarTelaRepouso(); // entra no modo repouso ao carregar
+  entrarTelaRepouso(); // inicia em modo repouso
 });
-
 
 </script>
 </body>
