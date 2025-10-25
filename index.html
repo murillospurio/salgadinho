@@ -286,20 +286,29 @@ function mostrarProdutos() {
     const el = document.createElement('div');
     el.className = 'produto';
 
-    // Caminho correto da imagem
-    const imgPath = `${API_BASE}/static/uploads/salgadinho/${p.img}`;
+    // Novo caminho compatível com Cloudinary
+  let imgPath = "";
+  if (p.img && p.img.startsWith("http")) {
+    imgPath = p.img; // já é link Cloudinary
+  } else if (p.img && p.img.includes("/")) {
+    imgPath = `${API_BASE}/static/uploads/${p.img}`;
+  } else if (p.img) {
+    imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+  }
 
-    el.innerHTML = `
-      <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
-      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
-      <span id="estoque-${p.id}">${p.estoque}</span></div>
-      <div>
-        <button onclick="alterarQuantidade(${p.id},-1)">-</button>
-        <span id="qtd-${p.id}">0</span>
-        <button onclick="alterarQuantidade(${p.id},1)">+</button>
-      </div>`;
-    div.appendChild(el);
-  });
+  el.innerHTML = `
+    <img src="${imgPath}" alt="${p.nome}" 
+         onerror="this.style.display='none'" 
+         style="width:220px;height:220px;object-fit:contain;border-radius:15px;">
+    <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
+    <span id="estoque-${p.id}">${p.estoque}</span></div>
+    <div>
+      <button onclick="alterarQuantidade(${p.id},-1)">-</button>
+      <span id="qtd-${p.id}">0</span>
+      <button onclick="alterarQuantidade(${p.id},1)">+</button>
+    </div>`;
+  div.appendChild(el);
+});
 }
 
 /* === alterar quantidade === */
