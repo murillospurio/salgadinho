@@ -367,19 +367,123 @@ function cancelarPedido() {
   atualizarCarrinho();
 }
 
+/* === OVERLAY (VER PEDIDO) === */
+const overlay = document.getElementById('overlay');
+const overlayItens = document.getElementById('overlayItens');
+const pagamentoOpcoes = document.getElementById('pagamentoOpcoes');
 
-/* === confirmar pedido === */
-async function confirmarComForma(forma){
-  const tela=document.getElementById("telaStatus");
-  const texto=document.getElementById("textoStatus");
-  const img=document.getElementById("imgStatus");
-  tela.style.display="flex";
-  texto.innerText="✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
-  img.src="maquininha.png";
-  img.style.display="block";
+// Botão "Ver Pedido"
+document.getElementById('verPedidoBtn').addEventListener('click', ()=>{
+  overlayItens.innerHTML = '';
+  let total = 0;
+  let vazio = true;
+
+  // monta a lista de itens do carrinho
+  for (let id in carrinho) {
+    const qtd = carrinho[id];
+    if (qtd > 0) {
+      vazio = false;
+      const p = produtos.find(x => x.id == id);
+      const subtotal = p.preco * qtd;
+      total += subtotal;
+      overlayItens.innerHTML += `${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
+    }
+  }
+
+  // se o carrinho estiver vazio
+  if (vazio) {
+    overlayItens.innerHTML = 'Carrinho vazio!';
+    pagamentoOpcoes.style.display = 'none';
+  } else {
+    overlayItens.innerHTML += `<br><b>Total: R$ ${total.toFixed(2)}</b>`;
+    pagamentoOpcoes.style.display = 'flex';
+  }
+
+  overlay.classList.add('show');
+});
+
+// Botão "Cancelar" dentro do overlay
+function fecharOverlay(){
+  overlay.classList.remove('show');
+  pagamentoOpcoes.style.display = 'none';
 }
 
-carregarProdutos();
+/* === confirmar pedido === */
+async function confirmarComForma(forma) {
+  const items = [];
+  let total = 0;
+
+  // Monta os itens do carrinho
+  for (let id in carrinho) {
+    const qtd = carrinho[id];
+    if (qtd > 0) {
+      const p = produtos.find(prod => prod.id == id);
+      items.push({ id: p.id, name: p.nome.toLowerCase().replace(/\s/g, "_"), qty: qtd });
+      total += p.preco * qtd;
+    }
+  }
+
+  if (items.length === 0) {
+    alert('Carrinho vazio!');
+    return;
+  }
+
+  // Cria o payload do pedido
+  const payload = {
+    order_id: "PED-" + Date.now(),
+    total: Number(total.toFixed(2)),
+    items: items,
+    forma_pagamento: forma
+  };
+
+  const tela = document.getElementById("telaStatus");
+  const texto = document.getElementById("textoStatus");
+  const img = document.getElementById("imgStatus");
+
+  try {
+    // Envia para o Flask
+    const resp = await fetch(`${API_BASE}/pedido/${ID_MAQUINA}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      alert("❌ Erro ao enviar pedido. Tente novamente.");
+      fecharOverlay();
+      return;
+    }
+
+    // === Se for PIX ===
+    if (forma === "pix" && data.qr_base64) {
+      overlayItens.innerHTML = `
+        <p>Escaneie o QR Code abaixo para pagar:</p>
+        <img src="data:image/png;base64,${data.qr_base64}" 
+             style="width:400px;height:400px;">
+        <p><b>Ou copie o código Pix:</b><br>${data.qr_code}</p>
+      `;
+      document.getElementById("pagamentoOpcoes").style.display = "none";
+      return; // mantém QR na tela até o pagamento
+    }
+
+    // === Se for DÉBITO ou CRÉDITO ===
+    fecharOverlay();
+    tela.style.display = "flex";
+    texto.innerText = "✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
+    img.src = "maquininha.png";
+    img.style.display = "block";
+
+    // Aguardar o ESP confirmar entrega via Flask
+    aguardarEntrega(tela, texto, img);
+
+  } catch (e) {
+    console.error("Erro ao enviar pedido:", e);
+    alert("❌ Falha de conexão. Verifique a internet.");
+    fecharOverlay();
+  }
+}
 
 const produtosDiv = document.getElementById('produtos');
 produtosDiv.addEventListener('scroll', () => {
