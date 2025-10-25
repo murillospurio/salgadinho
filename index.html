@@ -340,6 +340,68 @@ produtosDiv.addEventListener('scroll', () => {
     }
   });
 });
+
+// === TELA DE REPOUSO / CARROSSEL DE PRODUTOS ===
+let slideIndex = 0;
+let timerCarrossel = null;
+
+async function iniciarTelaRepouso() {
+  document.getElementById("telaRepouso").style.display = "flex";
+  document.getElementById("produtos").style.display = "none";
+
+  // Carregar catálogo de produtos para o carrossel
+  try {
+    const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
+    const produtos = await resp.json();
+
+    const slides = document.getElementById("slidesEspera");
+    slides.innerHTML = "";
+
+    // Criar imagens para o carrossel
+    produtos.forEach(p => {
+      const imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+      const img = document.createElement("img");
+      img.src = imgPath;
+      img.alt = p.nome;
+      slides.appendChild(img);
+    });
+
+    // Reinicia animação
+    slideIndex = 0;
+    clearInterval(timerCarrossel);
+    timerCarrossel = setInterval(() => moverCarrossel(produtos.length), 3000);
+
+  } catch (e) {
+    console.error("Erro ao carregar imagens do carrossel:", e);
+  }
+}
+
+function moverCarrossel(qtd) {
+  slideIndex = (slideIndex + 1) % qtd;
+  const slides = document.getElementById("slidesEspera");
+  slides.style.transform = `translateX(-${slideIndex * 100}%)`;
+}
+
+function sairDaTelaRepouso() {
+  document.getElementById("telaRepouso").style.display = "none";
+  document.getElementById("produtos").style.display = "flex";
+  clearInterval(timerCarrossel);
+  carregarProdutos();
+  iniciarTimerInatividade();
+}
+
+// volta para repouso após 1 min de inatividade
+function iniciarTimerInatividade() {
+  clearTimeout(timerLimpeza);
+  timerLimpeza = setTimeout(() => iniciarTelaRepouso(), 60000);
+}
+
+// clique na tela para sair do repouso
+document.getElementById("telaRepouso").addEventListener("click", sairDaTelaRepouso);
+
+// inicia no modo repouso ao abrir
+iniciarTelaRepouso();
+
 </script>
 </body>
 </html>
