@@ -341,110 +341,101 @@ produtosDiv.addEventListener('scroll', () => {
   });
 });
 
-// === TELA DE REPOUSO / CARROSSEL DE PRODUTOS ===
+/* ======== TELA DE REPOUSO E CARROSSEL ======== */
 let pos = 0;
 let animacaoCarrossel = null;
 let timerInatividade = null;
 
+// === INICIAR TELA DE REPOUSO ===
 async function iniciarTelaRepouso() {
+  console.log("🟢 Entrando na tela de repouso...");
   const telaRepouso = document.getElementById("telaRepouso");
   const produtosDiv = document.getElementById("produtos");
+  const carrinhoDiv = document.querySelector(".carrinho");
   const slides = document.getElementById("slidesEspera");
 
-  // ativa tela de repouso e oculta catálogo
-  telaRepouso.style.display = "flex";
+  // Oculta catálogo e carrinho
   produtosDiv.style.display = "none";
+  if (carrinhoDiv) carrinhoDiv.style.display = "none";
+  telaRepouso.style.display = "flex";
 
   try {
+    // 🔹 Pega os produtos diretamente do Flask
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     const produtos = await resp.json();
 
     slides.innerHTML = "";
 
     if (!produtos || produtos.length === 0) {
-      const aviso = document.createElement("p");
-      aviso.textContent = "Catálogo vazio...";
-      aviso.style.color = "white";
-      aviso.style.fontSize = "40px";
-      slides.appendChild(aviso);
+      slides.innerHTML = "<p style='color:white;font-size:40px;'>Catálogo vazio</p>";
       return;
     }
 
-    // cria imagens duplicadas para loop infinito
+    // 🔹 Duplica imagens pra loop infinito
     const listaLoop = [...produtos, ...produtos];
     listaLoop.forEach(p => {
-      const imgPath = p.img.startsWith("http") ? p.img : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
       const img = document.createElement("img");
-      img.src = imgPath;
-      img.alt = p.nome || "Produto";
+      img.src = p.img.startsWith("http") ? p.img : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+      img.alt = p.nome;
       slides.appendChild(img);
     });
 
-    // reinicia rolagem
+    // 🔹 Reinicia rolagem
     pos = 0;
     if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
     moverCarrossel();
 
   } catch (e) {
-    console.error("❌ Erro ao carregar imagens do carrossel:", e);
+    console.error("❌ Erro ao carregar carrossel:", e);
   }
 }
 
+// === ANIMAÇÃO DO CARROSSEL ===
 function moverCarrossel() {
   const slides = document.getElementById("slidesEspera");
-  if (!slides) return;
-
-  pos -= 2; // velocidade (quanto menor, mais lento)
+  if (!slides || slides.children.length === 0) return;
+  pos -= 2; // velocidade (2 = médio)
   if (Math.abs(pos) >= slides.scrollWidth / 2) pos = 0;
-
   slides.style.transform = `translateX(${pos}px)`;
   animacaoCarrossel = requestAnimationFrame(moverCarrossel);
 }
 
-// === Sair da tela de repouso ao clicar ===
+// === SAIR DA TELA DE REPOUSO ===
 async function sairDaTelaRepouso() {
+  console.log("🔵 Saindo da tela de repouso...");
   const telaRepouso = document.getElementById("telaRepouso");
   const produtosDiv = document.getElementById("produtos");
   const carrinhoDiv = document.querySelector(".carrinho");
 
-  // 🔹 garante que a tela de repouso realmente some
   telaRepouso.style.display = "none";
-  telaRepouso.classList.remove("ativo");
-
-  // 🔹 reativa catálogo e carrinho
   produtosDiv.style.display = "flex";
   if (carrinhoDiv) carrinhoDiv.style.display = "flex";
 
-  // 🔹 cancela carrossel e recarrega catálogo
   if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
 
-  await carregarProdutos();     // garante que pega os novos produtos do Flask
-  destacarCentral();            // volta o destaque pro item do meio
-  iniciarTimerInatividade();    // reinicia o cronômetro de repouso
-
-  console.log("🟢 Tela de repouso encerrada — catálogo reativado.");
+  await carregarProdutos();
+  destacarCentral();
+  iniciarTimerInatividade();
 }
 
-
-// === Timer de inatividade ===
+// === VOLTAR AO REPOUSO APÓS INATIVIDADE ===
 function iniciarTimerInatividade() {
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(() => iniciarTelaRepouso(), 60000); // 1 minuto
+  timerInatividade = setTimeout(() => iniciarTelaRepouso(), 60000); // 1 min
 }
 
-// === Eventos de interação ===
+// === EVENTOS DE CLIQUE / MOVIMENTO ===
 window.addEventListener("DOMContentLoaded", () => {
   const telaRepouso = document.getElementById("telaRepouso");
   if (telaRepouso) {
     telaRepouso.addEventListener("click", sairDaTelaRepouso);
   }
 
-  // qualquer toque ou clique reseta o temporizador
-  ["click", "mousemove", "touchstart", "keypress"].forEach(evt => {
+  ["click", "mousemove", "keypress", "touchstart"].forEach(evt => {
     document.addEventListener(evt, () => iniciarTimerInatividade());
   });
 
-  iniciarTelaRepouso(); // inicia já na tela de espera
+  iniciarTelaRepouso(); // inicia na tela de espera
 });
 
 
