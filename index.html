@@ -342,76 +342,99 @@ produtosDiv.addEventListener('scroll', () => {
 });
 
 // === TELA DE REPOUSO / CARROSSEL DE PRODUTOS ===
-let slideIndex = 0;
-let timerCarrossel = null;
+let pos = 0;
+let animacaoCarrossel = null;
+let timerInatividade = null;
 
 async function iniciarTelaRepouso() {
   const telaRepouso = document.getElementById("telaRepouso");
   const produtosDiv = document.getElementById("produtos");
   const slides = document.getElementById("slidesEspera");
 
+  // ativa tela de repouso e oculta catálogo
   telaRepouso.style.display = "flex";
   produtosDiv.style.display = "none";
-  // Carregar catálogo de produtos para o carrossel
+
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     const produtos = await resp.json();
 
-     slides.innerHTML = "";
+    slides.innerHTML = "";
 
-    // Criar imagens para o carrossel
-    produtos.forEach(p => {
-      const imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+    if (!produtos || produtos.length === 0) {
+      const aviso = document.createElement("p");
+      aviso.textContent = "Catálogo vazio...";
+      aviso.style.color = "white";
+      aviso.style.fontSize = "40px";
+      slides.appendChild(aviso);
+      return;
+    }
+
+    // cria imagens duplicadas para loop infinito
+    const listaLoop = [...produtos, ...produtos];
+    listaLoop.forEach(p => {
+      const imgPath = p.img.startsWith("http") ? p.img : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
       const img = document.createElement("img");
       img.src = imgPath;
-      img.alt = p.nome;
+      img.alt = p.nome || "Produto";
       slides.appendChild(img);
     });
 
-    // Reinicia animação
-    slideIndex = 0;
-    clearInterval(timerCarrossel);
-    timerCarrossel = setInterval(() => moverCarrossel(produtos.length), 3000);
+    // reinicia rolagem
+    pos = 0;
+    if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
+    moverCarrossel();
 
   } catch (e) {
-    console.error("Erro ao carregar imagens do carrossel:", e);
+    console.error("❌ Erro ao carregar imagens do carrossel:", e);
   }
 }
 
-function moverCarrossel(qtd) {
-  slideIndex = (slideIndex + 1) % qtd;
+function moverCarrossel() {
   const slides = document.getElementById("slidesEspera");
-  slides.style.transition = "transform 1.5s ease-in-out"; // transição mais suave
-  slides.style.transform = `translateX(-${slideIndex * 100}%)`;
+  if (!slides) return;
+
+  pos -= 2; // velocidade (quanto menor, mais lento)
+  if (Math.abs(pos) >= slides.scrollWidth / 2) pos = 0;
+
+  slides.style.transform = `translateX(${pos}px)`;
+  animacaoCarrossel = requestAnimationFrame(moverCarrossel);
 }
 
-function sairDaTelaRepouso() {
+// === Sair da tela de repouso ao clicar ===
+async function sairDaTelaRepouso() {
   const telaRepouso = document.getElementById("telaRepouso");
   const produtosDiv = document.getElementById("produtos");
 
   telaRepouso.style.display = "none";
   produtosDiv.style.display = "flex";
 
-  clearInterval(timerCarrossel);
-  carregarProdutos();
+  if (animacaoCarrossel) cancelAnimationFrame(animacaoCarrossel);
+  await carregarProdutos();
   iniciarTimerInatividade();
 }
 
-// volta para repouso após 1 min de inatividade
+// === Timer de inatividade ===
 function iniciarTimerInatividade() {
-  clearTimeout(timerLimpeza);
-  timerLimpeza = setTimeout(() => iniciarTelaRepouso(), 60000);
+  clearTimeout(timerInatividade);
+  timerInatividade = setTimeout(() => iniciarTelaRepouso(), 60000); // 1 minuto
 }
 
+// === Eventos de interação ===
 window.addEventListener("DOMContentLoaded", () => {
   const telaRepouso = document.getElementById("telaRepouso");
   if (telaRepouso) {
     telaRepouso.addEventListener("click", sairDaTelaRepouso);
   }
+
+  // qualquer toque ou clique reseta o temporizador
+  ["click", "mousemove", "touchstart", "keypress"].forEach(evt => {
+    document.addEventListener(evt, () => iniciarTimerInatividade());
+  });
+
+  iniciarTelaRepouso(); // inicia já na tela de espera
 });
 
-// Inicia no modo repouso ao abrir
-iniciarTelaRepouso();
 
 </script>
 </body>
