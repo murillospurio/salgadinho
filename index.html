@@ -381,23 +381,20 @@ async function entrarTelaRepouso() {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     const produtos = await resp.json();
 
-    // Adiciona imagens ao carrossel
-    produtos.forEach(p => {
+    // 🔹 Cria imagens duplicadas para efeito infinito
+    const lista = [...produtos, ...produtos];
+    lista.forEach(p => {
       const img = document.createElement("img");
-      img.src = resolveImgPath(p);
+      img.src = p.img && p.img.startsWith("http")
+        ? p.img
+        : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
       img.alt = p.nome;
       img.onerror = () => (img.style.display = "none");
-      img.style.width = "100%";
-      img.style.height = "100%";
-      img.style.objectFit = "contain"; // centraliza e mantém proporção
       slides.appendChild(img);
     });
 
-    // Reinicia o carrossel (mudança a cada 7 segundos)
-    slideIndex = 0;
-    clearInterval(timerCarrossel);
-    moverCarrossel(produtos.length); // mostra primeira imagem
-    timerCarrossel = setInterval(() => moverCarrossel(produtos.length), 7000);
+    // 🔹 Inicia a animação suave
+    slides.style.animation = "rolarContinuo 40s linear infinite";
   } catch (err) {
     console.error("Erro ao carregar carrossel:", err);
   }
