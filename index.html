@@ -428,7 +428,7 @@ async function confirmarComForma(forma) {
     return;
   }
 
-  // Cria o payload do pedido
+  // Cria o payload do pedido (compatível com seu Flask)
   const payload = {
     order_id: "PED-" + Date.now(),
     total: Number(total.toFixed(2)),
@@ -441,7 +441,7 @@ async function confirmarComForma(forma) {
   const img = document.getElementById("imgStatus");
 
   try {
-    // Envia para o Flask
+    // Envia o pedido para o Flask
     const resp = await fetch(`${API_BASE}/pedido/${ID_MAQUINA}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -465,6 +465,7 @@ async function confirmarComForma(forma) {
         <p><b>Ou copie o código Pix:</b><br>${data.qr_code}</p>
       `;
       document.getElementById("pagamentoOpcoes").style.display = "none";
+      overlay.classList.add('show');
       return; // mantém QR na tela até o pagamento
     }
 
@@ -475,71 +476,23 @@ async function confirmarComForma(forma) {
     img.src = "maquininha.png";
     img.style.display = "block";
 
-    // Aguardar o ESP confirmar entrega via Flask
-    aguardarEntrega(tela, texto, img);
+    // Sai automaticamente após 15 segundos para o catálogo/tela de espera
+    setTimeout(() => {
+      tela.style.display = "none";
+      // Se você tiver tela de repouso, pode reativá-la aqui:
+      if (typeof entrarTelaRepouso === "function") {
+        entrarTelaRepouso();
+      } else {
+        // fallback: recarrega a página
+        location.reload();
+      }
+    }, 15000);
 
   } catch (e) {
     console.error("Erro ao enviar pedido:", e);
-    alert("❌ Falha de conexão. Verifique a internet.");
+    alert("❌ Falha de conexão. Abra o terminal clicando no botao verde e cancele a operação.");
     fecharOverlay();
   }
-}
-// === Aguarda o ESP confirmar entrega do produto ===
-async function aguardarEntrega(tela, texto, img) {
-  let tentativas = 0;
-  const intervalo = setInterval(async () => {
-    try {
-      const r = await fetch(`${API_BASE}/status_pagamento/${ID_MAQUINA}`);
-      const data = await r.json();
-
-      if (data.status === "entregue") {
-        clearInterval(intervalo);
-        texto.innerText = "✅ Obrigado, volte sempre!";
-        img.style.display = "none";
-        setTimeout(() => {
-          tela.style.display = "none";
-          document.getElementById("telaRepouso").classList.add("ativo");
-        }, 5000);
-      }
-
-      tentativas++;
-      if (tentativas > 90) clearInterval(intervalo); // timeout após 3 minutos
-    } catch (err) {
-      console.error("Erro verificando status:", err);
-    }
-  }, 2000);
-}
-
-
-const produtosDiv = document.getElementById('produtos');
-produtosDiv.addEventListener('scroll', () => {
-  const produtos = document.querySelectorAll('.produto');
-  let centro = produtosDiv.scrollLeft + produtosDiv.clientWidth / 2;
-
-  produtos.forEach(produto => {
-    const box = produto.getBoundingClientRect();
-    const produtoCentro = box.left + box.width / 2;
-    const distancia = Math.abs(produtoCentro - window.innerWidth / 2);
-
-    if (distancia < 250) {
-      produto.classList.add('central');
-    } else {
-      produto.classList.remove('central');
-    }
-  });
-});
-
-function resolveImgPath(p) {
-  // Retorna direto o link Cloudinary se já for completo
-  if (p.img && p.img.startsWith("http")) return p.img;
-
-  // Caso seja um nome antigo (sem link completo), monta o caminho local
-  if (p.img && p.img.includes("/"))
-    return `${API_BASE}/static/uploads/${p.img}`;
-  if (p.img)
-    return `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-
-  return ""; // fallback vazio se não tiver imagem
 }
 
 let slideIndex = 0;
