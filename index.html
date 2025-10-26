@@ -310,6 +310,28 @@ function mostrarProdutos() {
   div.appendChild(el);
 });
 }
+/* === EFEITO DE DESTAQUE NO PRODUTO CENTRAL === */
+const produtosDiv = document.getElementById('produtos');
+
+produtosDiv.addEventListener('scroll', () => {
+  const produtos = document.querySelectorAll('.produto');
+  let centro = produtosDiv.scrollLeft + produtosDiv.clientWidth / 2;
+
+  produtos.forEach(produto => {
+    const box = produto.getBoundingClientRect();
+    const produtoCentro = box.left + box.width / 2;
+    const distancia = Math.abs(produtoCentro - window.innerWidth / 2);
+
+    if (distancia < 250) {
+      produto.classList.add('central');
+    } else {
+      produto.classList.remove('central');
+    }
+  });
+});
+// força atualização do destaque inicial
+setTimeout(() => produtosDiv.dispatchEvent(new Event('scroll')), 300);
+
 
 /* === alterar quantidade === */
 function alterarQuantidade(id, delta) {
