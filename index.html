@@ -53,7 +53,7 @@ h1 {
 }
 .produto img {
   width:auto;
-  height:400px;
+  height:700px;
   object-fit:contain;
   transition: transform 0.3s ease;
 }
@@ -471,6 +471,12 @@ async function confirmarComForma(forma) {
 
     // === Se for DÉBITO ou CRÉDITO ===
     fecharOverlay();
+
+    // 🔹 limpa carrinho antes de mostrar a tela
+carrinho = {};
+document.getElementById('itensCarrinho').innerHTML = 'Vazio';
+document.getElementById('total').textContent = '0.00';
+
     tela.style.display = "flex";
     texto.innerText = "✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
     img.src = "maquininha.png";
@@ -479,14 +485,9 @@ async function confirmarComForma(forma) {
     // Sai automaticamente após 15 segundos para o catálogo/tela de espera
     setTimeout(() => {
       tela.style.display = "none";
-      // Se você tiver tela de repouso, pode reativá-la aqui:
-      if (typeof entrarTelaRepouso === "function") {
-        entrarTelaRepouso();
-      } else {
-        // fallback: recarrega a página
-        location.reload();
-      }
-    }, 15000);
+       document.getElementById("produtos").style.display = "flex";
+  iniciarTimerInatividade(); // só depois de 1 min sem toque ele entra em repouso
+}, 15000);
 
   } catch (e) {
     console.error("Erro ao enviar pedido:", e);
@@ -560,6 +561,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const tela = document.getElementById("telaRepouso");
   tela.addEventListener("click", sairTelaRepouso);
   entrarTelaRepouso(); // inicia em modo repouso
+  iniciarTimerInatividade(); // só entra em repouso após 1 minuto sem interação
 });
 
 </script>
