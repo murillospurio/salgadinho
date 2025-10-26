@@ -53,7 +53,7 @@ h1 {
 }
 .produto img {
   width:auto;
-  height:700px;
+  height:800px;
   object-fit:contain;
   transition: transform 0.3s ease;
 }
@@ -270,6 +270,7 @@ async function carregarProdutos() {
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
+    carregarEstoqueLocal();
     console.log("Resposta do servidor:", produtos);
     mostrarProdutos();
  } catch(e){
@@ -352,6 +353,27 @@ function alterarQuantidade(id, delta) {
 
   // atualiza a soma e o resumo do carrinho
   atualizarCarrinho();
+  salvarEstoqueLocal();
+}
+
+/* === Salvar e carregar estoque local === */
+function salvarEstoqueLocal() {
+  localStorage.setItem("estoqueLocal", JSON.stringify(produtos.map(p => ({
+    id: p.id,
+    estoque: parseInt(document.getElementById(`estoque-${p.id}`).textContent)
+  }))));
+}
+
+function carregarEstoqueLocal() {
+  const salvo = localStorage.getItem("estoqueLocal");
+  if (!salvo) return;
+  const estoqueLocal = JSON.parse(salvo);
+  estoqueLocal.forEach(item => {
+    const p = produtos.find(prod => prod.id === item.id);
+    if (p) {
+      p.estoque = item.estoque;
+    }
+  });
 }
 
 /* === atualizar carrinho === */
@@ -493,6 +515,7 @@ async function confirmarComForma(forma) {
 
     // === Se for DÉBITO ou CRÉDITO ===
     fecharOverlay();
+    salvarEstoqueLocal();
 
     // 🔹 limpa carrinho antes de mostrar a tela
 carrinho = {};
