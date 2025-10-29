@@ -391,52 +391,62 @@ async function confirmarComForma(forma) {
   }
 }
 
-/* === AUTO SCROLL SEM TELA DE ESPERA === */
+/* === AUTO SCROLL SEM TELA DE ESPERA (CORRIGIDO) === */
 let timerInatividade = null;
 let autoScroll = null;
 let produtosDiv;
 
-function iniciarTimerInatividade(){
+/* inicia contador de inatividade */
+function iniciarTimerInatividade() {
   pararAutoScroll();
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(iniciarAutoScroll, 120000); // 2 min
+  timerInatividade = setTimeout(iniciarAutoScroll, 120000); // 2 minutos
 }
 
-function iniciarAutoScroll(){
-  if (autoScroll) return;
+/* inicia auto-scroll */
+function iniciarAutoScroll() {
+  if (!produtosDiv) return; // garante que o elemento existe
+  if (autoScroll) return;   // evita múltiplos intervalos
 
   autoScroll = setInterval(() => {
 
     const maxScroll = produtosDiv.scrollWidth - produtosDiv.clientWidth;
 
-    // Se chegou no final → volta para o começo
-    if (produtosDiv.scrollLeft >= maxScroll - 20) {
-      produtosDiv.scrollTo({left: 0, behavior: "auto"}); // "auto" para evitar travar
+    // Se chegou no final → reinicia suavemente
+    if (produtosDiv.scrollLeft >= maxScroll - 30) {
+      produtosDiv.scrollTo({ left: 0, behavior: "smooth" });
     } else {
-      produtosDiv.scrollBy({left: 6, behavior: "smooth"});
+      produtosDiv.scrollBy({ left: 6, behavior: "smooth" }); // velocidade
     }
 
-  }, 80);
+  }, 60); // intervalo do movimento (menor = mais fluido)
 }
 
-function pararAutoScroll(){
-  if (autoScroll){
+/* parar auto-scroll ao tocar */
+function pararAutoScroll() {
+  if (autoScroll) {
     clearInterval(autoScroll);
     autoScroll = null;
   }
 }
 
+/* Eventos para reiniciar contagem ao tocar na tela */
 window.addEventListener("touchstart", iniciarTimerInatividade);
 window.addEventListener("click", iniciarTimerInatividade);
 
+/* Quando a pagina carregar, garantir que produtosDiv existe */
 window.addEventListener("DOMContentLoaded", () => {
-  produtosDiv = document.getElementById("produtos");
-  carregarProdutos();
-  iniciarTimerInatividade();
 
+  // agora garantimos que o catálogo existe
+  produtosDiv = document.getElementById("produtos");
+
+  carregarProdutos();        // carrega catálogo
+  iniciarTimerInatividade(); // inicia contagem do auto-scroll
+
+  // força aplicar destaque no produto central ao abrir
   setTimeout(() => {
-    produtosDiv.dispatchEvent(new Event("scroll"));
-  }, 500);
+    produtosDiv.dispatchEvent(new Event('scroll'));
+  }, 600);
 });
 
 </script>
