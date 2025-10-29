@@ -235,11 +235,15 @@ async function carregarProdutos() {
 }
 
 
-/* === mostrar produtos === */
 function mostrarProdutos() {
+
   const div = document.getElementById('produtos');
   div.innerHTML = '';
-  produtos.forEach(p => {
+
+  // Criamos uma lista duplicada → loop perfeito
+  const listaLoop = [...produtos, ...produtos];
+
+  listaLoop.forEach((p, i) => {
     const el = document.createElement('div');
     el.className = 'produto';
 
@@ -248,18 +252,19 @@ function mostrarProdutos() {
       : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
 
     el.innerHTML = `
-      <img src="${imgPath}" alt="${p.nome}"
-           onerror="this.style.display='none'">
+      <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
-      <span id="estoque-${p.id}">${p.estoque}</span></div>
+      <span id="estoque-${p.id}-${i}">${p.estoque}</span></div>
       <div>
         <button onclick="alterarQuantidade(${p.id},-1)">-</button>
-        <span id="qtd-${p.id}">0</span>
+        <span id="qtd-${p.id}-${i}">0</span>
         <button onclick="alterarQuantidade(${p.id},1)">+</button>
       </div>`;
+
     div.appendChild(el);
   });
 }
+
 
 
 /* efeito destaque */
