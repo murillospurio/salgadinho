@@ -394,7 +394,7 @@ async function confirmarComForma(forma) {
 /* === AUTO SCROLL SEM TELA DE ESPERA === */
 let timerInatividade = null;
 let autoScroll = null;
-let produtosDiv; // <-- declarado aqui (sem pegar o elemento ainda)
+let produtosDiv;
 
 function iniciarTimerInatividade(){
   pararAutoScroll();
@@ -404,12 +404,18 @@ function iniciarTimerInatividade(){
 
 function iniciarAutoScroll(){
   if (autoScroll) return;
-  autoScroll = setInterval(() => {
-    produtosDiv.scrollBy({left: 6, behavior: "smooth"});
 
-    if (produtosDiv.scrollLeft + produtosDiv.clientWidth >= produtosDiv.scrollWidth - 10) {
-      produtosDiv.scrollTo({left: 0, behavior: "smooth"});
+  autoScroll = setInterval(() => {
+
+    const maxScroll = produtosDiv.scrollWidth - produtosDiv.clientWidth;
+
+    // Se chegou no final → volta para o começo
+    if (produtosDiv.scrollLeft >= maxScroll - 20) {
+      produtosDiv.scrollTo({left: 0, behavior: "auto"}); // "auto" para evitar travar
+    } else {
+      produtosDiv.scrollBy({left: 6, behavior: "smooth"});
     }
+
   }, 80);
 }
 
@@ -424,7 +430,7 @@ window.addEventListener("touchstart", iniciarTimerInatividade);
 window.addEventListener("click", iniciarTimerInatividade);
 
 window.addEventListener("DOMContentLoaded", () => {
-  produtosDiv = document.getElementById("produtos"); // ✅ agora existe
+  produtosDiv = document.getElementById("produtos");
   carregarProdutos();
   iniciarTimerInatividade();
 
