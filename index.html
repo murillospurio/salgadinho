@@ -403,8 +403,9 @@ function iniciarTimerInatividade(){
 }
 
 function iniciarAutoScroll(){
+if (autoScroll) return;
   autoScroll=setInterval(()=>{
-    produtosDiv.scrollBy({left:8,behavior:"smooth"});
+    produtosDiv.scrollBy({left:6,behavior:"smooth"});
     if(produtosDiv.scrollLeft+produtosDiv.clientWidth>=produtosDiv.scrollWidth-5){
       produtosDiv.scrollTo({left:0,behavior:"smooth"});
     }
@@ -419,6 +420,7 @@ window.addEventListener("touchstart", iniciarTimerInatividade);
 window.addEventListener("click", iniciarTimerInatividade);
 window.addEventListener("DOMContentLoaded", ()=>{ carregarProdutos(); iniciarTimerInatividade(); });
 
+iniciarTimerInatividade();
 
 </script>
 </body>
