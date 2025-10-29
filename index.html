@@ -409,19 +409,21 @@ function iniciarAutoScroll() {
 
   autoScroll = setInterval(() => {
 
+    // recalcula o limite em tempo real (isso é o que faltava)
     const maxScroll = produtosDiv.scrollWidth - produtosDiv.clientWidth;
 
-    // 👉 Se passou do fim ou ficou preso perto dele
-    if (produtosDiv.scrollLeft >= maxScroll - 5) {
-      produtosDiv.scrollTo({ left: 0, behavior: "smooth" });
+    // se chegou no final → volta ao início
+    if (produtosDiv.scrollLeft >= maxScroll - 10) {
+      produtosDiv.scrollTo({ left: 0, behavior: "auto" });
       return;
     }
 
-    // 👉 Continua rolando normalmente
+    // continua rolando suavemente
     produtosDiv.scrollBy({ left: 6, behavior: "smooth" });
 
   }, 60);
 }
+
 
 /* parar auto-scroll ao tocar */
 function pararAutoScroll() {
