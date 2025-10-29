@@ -479,7 +479,7 @@ async function confirmarComForma(forma) {
     const qtd = carrinho[id];
     if (qtd > 0) {
       const p = produtos.find(prod => prod.id == id);
-      items.push({ id: p.id, name: p.nome.toLowerCase().replace(/\s/g, "_"), qty: qtd });
+      items.push({ id: p.id, quantidade: qtd });
       total += p.preco * qtd;
     }
   }
