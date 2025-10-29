@@ -227,6 +227,16 @@ h1 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+@keyframes rolarContinuo {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); } /* vai rolando suavemente */
+}
+
+#slidesEspera {
+  display: flex;
+  animation: rolarContinuo 40s linear infinite;
+}
+
 </style>
 </head>
 
