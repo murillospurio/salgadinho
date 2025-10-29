@@ -392,35 +392,46 @@ async function confirmarComForma(forma) {
 }
 
 /* === AUTO SCROLL SEM TELA DE ESPERA === */
-let timerInatividade=null;
+let timerInatividade = null;
 let autoScroll = null;
-const produtosDiv = document.getElementById("produtos");
+let produtosDiv; // <-- declarado aqui (sem pegar o elemento ainda)
 
 function iniciarTimerInatividade(){
   pararAutoScroll();
   clearTimeout(timerInatividade);
-  timerInatividade=setTimeout(iniciarAutoScroll,120000); // 2 min
+  timerInatividade = setTimeout(iniciarAutoScroll, 120000); // 2 min
 }
 
 function iniciarAutoScroll(){
-if (autoScroll) return;
-  autoScroll=setInterval(()=>{
-    produtosDiv.scrollBy({left:6,behavior:"smooth"});
-    if(produtosDiv.scrollLeft+produtosDiv.clientWidth>=produtosDiv.scrollWidth-5){
-      produtosDiv.scrollTo({left:0,behavior:"smooth"});
+  if (autoScroll) return;
+  autoScroll = setInterval(() => {
+    produtosDiv.scrollBy({left: 6, behavior: "smooth"});
+
+    if (produtosDiv.scrollLeft + produtosDiv.clientWidth >= produtosDiv.scrollWidth - 10) {
+      produtosDiv.scrollTo({left: 0, behavior: "smooth"});
     }
-  },80);
+  }, 80);
 }
 
 function pararAutoScroll(){
-  if(autoScroll){clearInterval(autoScroll); autoScroll=null;}
+  if (autoScroll){
+    clearInterval(autoScroll);
+    autoScroll = null;
+  }
 }
 
 window.addEventListener("touchstart", iniciarTimerInatividade);
 window.addEventListener("click", iniciarTimerInatividade);
-window.addEventListener("DOMContentLoaded", ()=>{ carregarProdutos(); iniciarTimerInatividade(); });
 
-iniciarTimerInatividade();
+window.addEventListener("DOMContentLoaded", () => {
+  produtosDiv = document.getElementById("produtos"); // ✅ agora existe
+  carregarProdutos();
+  iniciarTimerInatividade();
+
+  setTimeout(() => {
+    produtosDiv.dispatchEvent(new Event("scroll"));
+  }, 500);
+});
 
 </script>
 </body>
