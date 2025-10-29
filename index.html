@@ -236,14 +236,10 @@ async function carregarProdutos() {
 
 
 function mostrarProdutos() {
-
   const div = document.getElementById('produtos');
   div.innerHTML = '';
 
-  // Criamos uma lista duplicada → loop perfeito
-  const listaLoop = [...produtos, ...produtos];
-
-  listaLoop.forEach((p, i) => {
+  produtos.forEach((p) => {
     const el = document.createElement('div');
     el.className = 'produto';
 
@@ -254,13 +250,12 @@ function mostrarProdutos() {
     el.innerHTML = `
       <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
       <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
-      <span id="estoque-${p.id}-${i}">${p.estoque}</span></div>
+      <span id="estoque-${p.id}">${p.estoque}</span></div>
       <div>
         <button onclick="alterarQuantidade(${p.id},-1)">-</button>
-        <span id="qtd-${p.id}-${i}">0</span>
+        <span id="qtd-${p.id}">0</span>
         <button onclick="alterarQuantidade(${p.id},1)">+</button>
       </div>`;
-
     div.appendChild(el);
   });
 }
@@ -415,20 +410,18 @@ function iniciarAutoScroll() {
 
   autoScroll = setInterval(() => {
 
-    // recalcula o limite em tempo real (isso é o que faltava)
+    produtosDiv.scrollBy({ left: 6, behavior: "smooth" });
+
     const maxScroll = produtosDiv.scrollWidth - produtosDiv.clientWidth;
 
-    // se chegou no final → volta ao início
-    if (produtosDiv.scrollLeft >= maxScroll - 10) {
-      produtosDiv.scrollTo({ left: 0, behavior: "auto" });
-      return;
+    // 🔥 tolerância aumenta confiabilidade no WebView Android
+    if (produtosDiv.scrollLeft >= maxScroll - 50) {
+      produtosDiv.scrollTo({ left: 0, behavior: "smooth" });
     }
-
-    // continua rolando suavemente
-    produtosDiv.scrollBy({ left: 6, behavior: "smooth" });
 
   }, 60);
 }
+
 
 
 /* parar auto-scroll ao tocar */
