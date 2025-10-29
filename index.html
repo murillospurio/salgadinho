@@ -19,6 +19,7 @@ h1 {
   margin-top:150px;
   margin-bottom: 200px;
 }
+
 /* Produtos */
 #produtos {
   display:flex;
@@ -162,7 +163,7 @@ h1 {
 #btnCredito { background-color:#28a745; }
 #btnPix { background-color:#ffc107; color:#000; }
 
-/* Tela de status (mensagens de pedido) */
+/* Tela de status */
 #telaStatus {
   position: fixed;
   top: 0; left: 0;
@@ -176,57 +177,7 @@ h1 {
   text-align: center;
   z-index: 10000;
 }
-#telaStatus img {
-  width: 350px;
-  height: auto;
-  margin-top: 30px;
-}
-
-/* Tela de repouso */
-#telaRepouso {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: url('fundo.png') no-repeat center center fixed;
-  background-size: cover;
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  z-index: 9999;
-  color: white;
-  pointer-events: none;
-}
-#telaRepouso.ativo { display:flex; pointer-events:all; }
-#carrosselEspera {
-  width: 85%;
-  height: 60%;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-#slidesEspera {
-  display: flex;
-  gap: 60px;
-  align-items: center;
-  transition: transform 0.2s linear;
-}
-#slidesEspera img {
-  height: 520px;
-  width: auto;
-  border-radius: 15px;
-}
-#telaRepouso h1 {
-  font-size: 60px;
-  margin-top: 40px;
-  font-family: 'Arial Black', sans-serif;
-  text-shadow: 0 0 25px rgba(255,255,255,0.8);
-  background: linear-gradient(90deg, #ff0303, #ff0303);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+#telaStatus img { width: 350px; margin-top: 30px; }
 </style>
 </head>
 
@@ -253,16 +204,9 @@ h1 {
   <button onclick="fecharOverlay()">Cancelar</button>
 </div>
 
-<!-- Tela preta com mensagens -->
 <div id="telaStatus">
   <div id="textoStatus">Enviando pedido...</div>
   <img id="imgStatus" src="" style="display:none;">
-</div>
-
-<!-- Tela de repouso com carrossel -->
-<div id="telaRepouso">
-  <div id="carrosselEspera"><div id="slidesEspera"></div></div>
-  <h1>🛒 Clique na tela para comprar</h1>
 </div>
 
 <script>
@@ -270,7 +214,6 @@ const ID_MAQUINA = 'salgadinho';
 const API_BASE = 'https://futuro-b32e6f57c219.herokuapp.com';
 let produtos = [];
 let carrinho = {};
-let timerLimpeza = null;
 
 /* === carregar produtos === */
 async function carregarProdutos() {
@@ -278,10 +221,8 @@ async function carregarProdutos() {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
     carregarEstoqueLocal();
-    console.log("Resposta do servidor:", produtos);
     mostrarProdutos();
- } catch(e){
-    console.error("Erro ao carregar produtos:", e);
+  } catch(e){
     alert("Erro ao carregar produtos");
   }
 }
@@ -294,101 +235,70 @@ function mostrarProdutos() {
     const el = document.createElement('div');
     el.className = 'produto';
 
-    // Novo caminho compatível com Cloudinary
-  let imgPath = "";
-  if (p.img && p.img.startsWith("http")) {
-    imgPath = p.img; // já é link Cloudinary
-  } else if (p.img && p.img.includes("/")) {
-    imgPath = `${API_BASE}/static/uploads/${p.img}`;
-  } else if (p.img) {
-    imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-  }
+    let imgPath = p.img && p.img.startsWith("http")
+      ? p.img
+      : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
 
-  el.innerHTML = `
-    <img src="${imgPath}" alt="${p.nome}" 
-         onerror="this.style.display='none'" 
-         style="width:220px;height:220px;object-fit:contain;border-radius:15px;">
-    <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
-    <span id="estoque-${p.id}">${p.estoque}</span></div>
-    <div>
-      <button onclick="alterarQuantidade(${p.id},-1)">-</button>
-      <span id="qtd-${p.id}">0</span>
-      <button onclick="alterarQuantidade(${p.id},1)">+</button>
-    </div>`;
-  div.appendChild(el);
-});
+    el.innerHTML = `
+      <img src="${imgPath}" alt="${p.nome}"
+           onerror="this.style.display='none'">
+      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
+      <span id="estoque-${p.id}">${p.estoque}</span></div>
+      <div>
+        <button onclick="alterarQuantidade(${p.id},-1)">-</button>
+        <span id="qtd-${p.id}">0</span>
+        <button onclick="alterarQuantidade(${p.id},1)">+</button>
+      </div>`;
+    div.appendChild(el);
+  });
 }
-/* === EFEITO DE DESTAQUE NO PRODUTO CENTRAL === */
-const produtosDiv = document.getElementById('produtos');
 
-produtosDiv.addEventListener('scroll', () => {
+/* efeito destaque */
+document.getElementById('produtos').addEventListener('scroll', () => {
   const produtos = document.querySelectorAll('.produto');
-  let centro = produtosDiv.scrollLeft + produtosDiv.clientWidth / 2;
-
+  let centro = window.innerWidth / 2;
   produtos.forEach(produto => {
     const box = produto.getBoundingClientRect();
-    const produtoCentro = box.left + box.width / 2;
-    const distancia = Math.abs(produtoCentro - window.innerWidth / 2);
-
-    if (distancia < 250) {
-      produto.classList.add('central');
-    } else {
-      produto.classList.remove('central');
-    }
+    const distancia = Math.abs((box.left + box.width/2) - centro);
+    if (distancia < 250) produto.classList.add('central');
+    else produto.classList.remove('central');
   });
 });
-// força atualização do destaque inicial
-setTimeout(() => produtosDiv.dispatchEvent(new Event('scroll')), 300);
-
 
 /* === alterar quantidade === */
 function alterarQuantidade(id, delta) {
   const produto = produtos.find(p => p.id === id);
   if (!produto) return;
-
-  // inicializa o carrinho se ainda não existir o item
   if (!carrinho[id]) carrinho[id] = 0;
-
-  // aplica a alteração de quantidade
   carrinho[id] += delta;
   if (carrinho[id] < 0) carrinho[id] = 0;
   if (carrinho[id] > produto.estoque) carrinho[id] = produto.estoque;
-
-  // atualiza visualmente
   document.getElementById(`qtd-${id}`).textContent = carrinho[id];
   document.getElementById(`estoque-${id}`).textContent = produto.estoque - carrinho[id];
-
-  // atualiza a soma e o resumo do carrinho
   atualizarCarrinho();
   salvarEstoqueLocal();
 }
 
-/* === Salvar e carregar estoque local === */
+/* salvar estoque */
 function salvarEstoqueLocal() {
   localStorage.setItem("estoqueLocal", JSON.stringify(produtos.map(p => ({
     id: p.id,
     estoque: parseInt(document.getElementById(`estoque-${p.id}`).textContent)
   }))));
 }
-
 function carregarEstoqueLocal() {
   const salvo = localStorage.getItem("estoqueLocal");
   if (!salvo) return;
-  const estoqueLocal = JSON.parse(salvo);
-  estoqueLocal.forEach(item => {
+  JSON.parse(salvo).forEach(item => {
     const p = produtos.find(prod => prod.id === item.id);
-    if (p) {
-      p.estoque = item.estoque;
-    }
+    if (p) p.estoque = item.estoque;
   });
 }
 
-/* === atualizar carrinho === */
+/* atualizar carrinho */
 function atualizarCarrinho() {
   const divCarrinho = document.getElementById('itensCarrinho');
-  let total = 0;
-  let vazio = true;
-
+  let total = 0, vazio = true;
   divCarrinho.innerHTML = '';
   for (let id in carrinho) {
     const qtd = carrinho[id];
@@ -400,12 +310,11 @@ function atualizarCarrinho() {
       divCarrinho.innerHTML += `${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
     }
   }
-
   if (vazio) divCarrinho.innerHTML = 'Vazio';
   document.getElementById('total').textContent = total.toFixed(2);
 }
 
-/* === cancelar pedido === */
+/* cancelar pedido */
 function cancelarPedido() {
   for (let id in carrinho) {
     carrinho[id] = 0;
@@ -418,203 +327,89 @@ function cancelarPedido() {
   atualizarCarrinho();
 }
 
-/* === OVERLAY (VER PEDIDO) === */
-const overlay = document.getElementById('overlay');
-const overlayItens = document.getElementById('overlayItens');
-const pagamentoOpcoes = document.getElementById('pagamentoOpcoes');
-
-// Botão "Ver Pedido"
+/* overlay */
 document.getElementById('verPedidoBtn').addEventListener('click', ()=>{
-  overlayItens.innerHTML = '';
-  let total = 0;
-  let vazio = true;
-
-  // monta a lista de itens do carrinho
+  overlayItens.innerHTML='';
+  let total=0, vazio=true;
   for (let id in carrinho) {
     const qtd = carrinho[id];
-    if (qtd > 0) {
-      vazio = false;
-      const p = produtos.find(x => x.id == id);
-      const subtotal = p.preco * qtd;
-      total += subtotal;
-      overlayItens.innerHTML += `${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
+    if(qtd>0){
+      vazio=false;
+      const p = produtos.find(x=>x.id==id);
+      const subtotal=p.preco*qtd;
+      total+=subtotal;
+      overlayItens.innerHTML+=`${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
     }
   }
-
-  // se o carrinho estiver vazio
-  if (vazio) {
-    overlayItens.innerHTML = 'Carrinho vazio!';
-    pagamentoOpcoes.style.display = 'none';
+  if(vazio){
+    overlayItens.innerHTML='Carrinho vazio!';
+    pagamentoOpcoes.style.display='none';
   } else {
-    overlayItens.innerHTML += `<br><b>Total: R$ ${total.toFixed(2)}</b>`;
-    pagamentoOpcoes.style.display = 'flex';
+    overlayItens.innerHTML+=`<br><b>Total: R$ ${total.toFixed(2)}</b>`;
+    pagamentoOpcoes.style.display='flex';
   }
-
   overlay.classList.add('show');
 });
+function fecharOverlay(){ overlay.classList.remove('show'); pagamentoOpcoes.style.display='none'; }
 
-// Botão "Cancelar" dentro do overlay
-function fecharOverlay(){
-  overlay.classList.remove('show');
-  pagamentoOpcoes.style.display = 'none';
-}
-
-/* === confirmar pedido === */
+/* pedido */
 async function confirmarComForma(forma) {
-  const items = [];
-  let total = 0;
-
-  // Monta os itens do carrinho
-  for (let id in carrinho) {
-    const qtd = carrinho[id];
-    if (qtd > 0) {
-      const p = produtos.find(prod => prod.id == id);
-      items.push({ id: p.id, name: p.nome.toLowerCase().replace(/\s/g, "_"), qty: qtd });
-      total += p.preco * qtd;
+  const items=[], totalEl=document.getElementById("total");
+  for (let id in carrinho){
+    if(carrinho[id]>0){
+      const p=produtos.find(prod=>prod.id==id);
+      items.push({id:p.id,name:p.nome.toLowerCase().replace(/\s/g,"_"),qty:carrinho[id]});
     }
   }
+  if(items.length===0)return alert('Carrinho vazio!');
 
-  if (items.length === 0) {
-    alert('Carrinho vazio!');
-    return;
-  }
+  const payload={ order_id:"PED-"+Date.now(), total:Number(totalEl.textContent), items, forma_pagamento:forma };
 
-  // Cria o payload do pedido (compatível com seu Flask)
-  const payload = {
-    order_id: "PED-" + Date.now(),
-    total: Number(total.toFixed(2)),
-    items: items,
-    forma_pagamento: forma
-  };
-
-  const tela = document.getElementById("telaStatus");
-  const texto = document.getElementById("textoStatus");
-  const img = document.getElementById("imgStatus");
-
-  try {
-    // Envia o pedido para o Flask
-    const resp = await fetch(`${API_BASE}/pedido/${ID_MAQUINA}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+  try{
+    const resp=await fetch(`${API_BASE}/pedido/${ID_MAQUINA}`,{
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
     });
-
-    const data = await resp.json();
-
-    if (!resp.ok) {
-      alert("❌ Erro ao enviar pedido. Tente novamente.");
-      fecharOverlay();
-      return;
-    }
-
-    // === Se for PIX ===
-    if (forma === "pix" && data.qr_base64) {
-      overlayItens.innerHTML = `
-        <p>Escaneie o QR Code abaixo para pagar:</p>
-        <img src="data:image/png;base64,${data.qr_base64}" 
-             style="width:400px;height:400px;">
-        <p><b>Ou copie o código Pix:</b><br>${data.qr_code}</p>
-      `;
-      document.getElementById("pagamentoOpcoes").style.display = "none";
-      overlay.classList.add('show');
-      return; // mantém QR na tela até o pagamento
-    }
-
-    // === Se for DÉBITO ou CRÉDITO ===
+    const data=await resp.json();
     fecharOverlay();
-    salvarEstoqueLocal();
+    carrinho={}; document.getElementById('itensCarrinho').innerHTML='Vazio'; document.getElementById('total').textContent='0.00';
 
-    // 🔹 limpa carrinho antes de mostrar a tela
-carrinho = {};
-document.getElementById('itensCarrinho').innerHTML = 'Vazio';
-document.getElementById('total').textContent = '0.00';
+    telaStatus.style.display="flex";
+    textoStatus.innerText="✅ Pedido enviado! Aperte o botão verde da maquininha.";
+    imgStatus.src="maquininha.png"; imgStatus.style.display="block";
+    setTimeout(()=>{ telaStatus.style.display="none"; },15000);
 
-    tela.style.display = "flex";
-    texto.innerText = "✅ Pedido enviado! Aperte o botão verde da maquininha para continuar.";
-    img.src = "maquininha.png";
-    img.style.display = "block";
-
-    // Sai automaticamente após 15 segundos para o catálogo/tela de espera
-    setTimeout(() => {
-      tela.style.display = "none";
-       document.getElementById("produtos").style.display = "flex";
-  iniciarTimerInatividade(); // só depois de 1 min sem toque ele entra em repouso
-}, 15000);
-
-  } catch (e) {
-    console.error("Erro ao enviar pedido:", e);
-    alert("❌ Falha de conexão. Abra o terminal clicando no botao verde e cancele a operação.");
-    fecharOverlay();
+  }catch(e){
+    alert("Erro ao enviar pedido.");
   }
 }
 
-let slideIndex = 0;
-let timerCarrossel = null;
-let timerInatividade = null;
+/* === AUTO SCROLL SEM TELA DE ESPERA === */
+let timerInatividade=null;
+let autoScroll = null;
+const produtosDiv = document.getElementById("produtos");
 
-async function entrarTelaRepouso() {
-  const tela = document.getElementById("telaRepouso");
-  const slides = document.getElementById("slidesEspera");
-  const produtosDiv = document.getElementById("produtos");
-
-  tela.classList.add("ativo");
-  tela.style.display = "flex";
-  produtosDiv.style.display = "none";
-  slides.innerHTML = "";
-
-  try {
-    const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
-    const produtos = await resp.json();
-
-    // 🔹 Cria imagens duplicadas para efeito infinito
-    const lista = [...produtos, ...produtos];
-    lista.forEach(p => {
-      const img = document.createElement("img");
-      img.src = p.img && p.img.startsWith("http")
-        ? p.img
-        : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-      img.alt = p.nome;
-      img.onerror = () => (img.style.display = "none");
-      slides.appendChild(img);
-    });
-
-    // 🔹 Inicia a animação suave
-    slides.style.animation = "rolarContinuo 40s linear infinite";
-  } catch (err) {
-    console.error("Erro ao carregar carrossel:", err);
-  }
-}
-
-function moverCarrossel(qtd) {
-  const slides = document.getElementById("slidesEspera");
-  if (!slides.children.length) return;
-  slideIndex = (slideIndex + 1) % qtd;
-  slides.style.transition = "transform 1.5s ease";
-  slides.style.transform = `translateX(-${slideIndex * 100}%)`;
-}
-
-function sairTelaRepouso() {
-  const tela = document.getElementById("telaRepouso");
-  const produtosDiv = document.getElementById("produtos");
-  tela.classList.remove("ativo");
-  tela.style.display = "none";
-  produtosDiv.style.display = "flex";
-  clearInterval(timerCarrossel);
-  carregarProdutos();
-  iniciarTimerInatividade();
-}
-
-function iniciarTimerInatividade() {
+function iniciarTimerInatividade(){
+  pararAutoScroll();
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(entrarTelaRepouso, 60000); // volta pra tela após 1min
+  timerInatividade=setTimeout(iniciarAutoScroll,120000); // 2 min
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const tela = document.getElementById("telaRepouso");
-  tela.addEventListener("click", sairTelaRepouso);
-  entrarTelaRepouso(); // inicia em modo repouso
-  iniciarTimerInatividade(); // só entra em repouso após 1 minuto sem interação
-});
+function iniciarAutoScroll(){
+  autoScroll=setInterval(()=>{
+    produtosDiv.scrollBy({left:8,behavior:"smooth"});
+    if(produtosDiv.scrollLeft+produtosDiv.clientWidth>=produtosDiv.scrollWidth-5){
+      produtosDiv.scrollTo({left:0,behavior:"smooth"});
+    }
+  },80);
+}
+
+function pararAutoScroll(){
+  if(autoScroll){clearInterval(autoScroll); autoScroll=null;}
+}
+
+window.addEventListener("touchstart", iniciarTimerInatividade);
+window.addEventListener("click", iniciarTimerInatividade);
+window.addEventListener("DOMContentLoaded", ()=>{ carregarProdutos(); iniciarTimerInatividade(); });
 
 </script>
 </body>
