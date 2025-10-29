@@ -220,9 +220,17 @@ async function carregarProdutos() {
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
-    carregarEstoqueLocal();
+
+    carregarEstoqueLocal();  // se ainda estiver usando estoque local
     mostrarProdutos();
-  } catch(e){
+
+    // ✅ força destacar o produto central depois que tudo foi exibido
+    setTimeout(() => {
+      const produtosDiv = document.getElementById('produtos');
+      produtosDiv.dispatchEvent(new Event('scroll'));
+    }, 300);
+
+  } catch(e) {
     alert("Erro ao carregar produtos");
   }
 }
