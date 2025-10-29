@@ -221,19 +221,19 @@ async function carregarProdutos() {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
 
-    carregarEstoqueLocal();  // se ainda estiver usando estoque local
-    mostrarProdutos();
+    carregarEstoqueLocal(); // mantém o estoque local se você está usando
+    mostrarProdutos();      // exibe produtos normalmente
 
-    // ✅ força destacar o produto central depois que tudo foi exibido
+    // ✅ Espera os produtos serem renderizados e aplica o destaque central
     setTimeout(() => {
-      const produtosDiv = document.getElementById('produtos');
-      produtosDiv.dispatchEvent(new Event('scroll'));
-    }, 300);
+      produtosDiv.dispatchEvent(new Event("scroll"));
+    }, 500);
 
   } catch(e) {
     alert("Erro ao carregar produtos");
   }
 }
+
 
 /* === mostrar produtos === */
 function mostrarProdutos() {
@@ -260,6 +260,7 @@ function mostrarProdutos() {
     div.appendChild(el);
   });
 }
+
 
 /* efeito destaque */
 document.getElementById('produtos').addEventListener('scroll', () => {
