@@ -392,53 +392,32 @@ async function confirmarComForma(forma) {
 }
 
 /* === AUTO SCROLL SEM TELA DE ESPERA === */
-let timerInatividade = null;
+let timerInatividade=null;
 let autoScroll = null;
 const produtosDiv = document.getElementById("produtos");
 
 function iniciarTimerInatividade(){
   pararAutoScroll();
   clearTimeout(timerInatividade);
-
-  // inicia contagem para começar a deslizar após 2 minutos sem toque
-  timerInatividade = setTimeout(iniciarAutoScroll, 120000); // 120000 ms = 2 min
+  timerInatividade=setTimeout(iniciarAutoScroll,120000); // 2 min
 }
 
 function iniciarAutoScroll(){
-  // se já estiver rolando, não inicia de novo
-  if (autoScroll) return;
-
-  autoScroll = setInterval(() => {
-    produtosDiv.scrollBy({ left: 6, behavior: "smooth" });
-
-    // Se chegou no final → volta para o início
-    if (produtosDiv.scrollLeft + produtosDiv.clientWidth >= produtosDiv.scrollWidth - 10) {
-      produtosDiv.scrollTo({ left: 0, behavior: "smooth" });
+  autoScroll=setInterval(()=>{
+    produtosDiv.scrollBy({left:8,behavior:"smooth"});
+    if(produtosDiv.scrollLeft+produtosDiv.clientWidth>=produtosDiv.scrollWidth-5){
+      produtosDiv.scrollTo({left:0,behavior:"smooth"});
     }
-
-  }, 50); // ajuste de velocidade aqui (menor = mais rápido)
+  },80);
 }
 
 function pararAutoScroll(){
-  if (autoScroll){
-    clearInterval(autoScroll);
-    autoScroll = null;
-  }
+  if(autoScroll){clearInterval(autoScroll); autoScroll=null;}
 }
 
-/* ✅ Ao tocar na tela, interrompe e reinicia contagem */
 window.addEventListener("touchstart", iniciarTimerInatividade);
 window.addEventListener("click", iniciarTimerInatividade);
-
-/* ✅ Ao carregar a página, inicia o contador */
-window.addEventListener("DOMContentLoaded", () => {
-  iniciarTimerInatividade();
-
-  // força o produto central a aparecer logo ao abrir
-  setTimeout(() => {
-    produtosDiv.dispatchEvent(new Event('scroll'));
-  }, 500);
-});
+window.addEventListener("DOMContentLoaded", ()=>{ carregarProdutos(); iniciarTimerInatividade(); });
 
 </script>
 </body>
