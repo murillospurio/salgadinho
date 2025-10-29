@@ -300,55 +300,62 @@ async function carregarProdutos() {
 function mostrarProdutos() {
   const div = document.getElementById('produtos');
   div.innerHTML = '';
+
   produtos.forEach(p => {
     const el = document.createElement('div');
     el.className = 'produto';
 
-    // Novo caminho compatível com Cloudinary
-  let imgPath = "";
-  if (p.img && p.img.startsWith("http")) {
-    imgPath = p.img; // já é link Cloudinary
-  } else if (p.img && p.img.includes("/")) {
-    imgPath = `${API_BASE}/static/uploads/${p.img}`;
-  } else if (p.img) {
-    imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-  }
+    // ✅ Caminho correto da imagem (Cloudinary / uploads)
+    let imgPath = "";
+    if (p.img && p.img.startsWith("http")) {
+      imgPath = p.img;
+    } else if (p.img && p.img.includes("/")) {
+      imgPath = `${API_BASE}/static/uploads/${p.img}`;
+    } else if (p.img) {
+      imgPath = `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
+    }
 
-  el.innerHTML = `
-    <img src="${imgPath}" alt="${p.nome}" 
-         onerror="this.style.display='none'" 
-         style="width:220px;height:220px;object-fit:contain;border-radius:15px;">
-    <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
-    <span id="estoque-${p.id}">${p.estoque}</span></div>
-    <div>
-      <button onclick="alterarQuantidade(${p.id},-1)">-</button>
-      <span id="qtd-${p.id}">0</span>
-      <button onclick="alterarQuantidade(${p.id},1)">+</button>
-    </div>`;
-  div.appendChild(el);
-});
+    el.innerHTML = `
+      <img src="${imgPath}" alt="${p.nome}" 
+           onerror="this.style.display='none'" 
+           style="width:220px;height:220px;object-fit:contain;border-radius:15px;">
+      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
+      <span id="estoque-${p.id}">${p.estoque}</span></div>
+      <div>
+        <button onclick="alterarQuantidade(${p.id},-1)">-</button>
+        <span id="qtd-${p.id}">0</span>
+        <button onclick="alterarQuantidade(${p.id},1)">+</button>
+      </div>`;
+    div.appendChild(el);
+  });
+
+  // ✅ Garante que o primeiro produto fique centralizado e destacado ao abrir
+  setTimeout(() => {
+    produtosDiv.scrollLeft = 0;
+    destacarCentral();
+  }, 300);
 }
-/* === EFEITO DE DESTAQUE NO PRODUTO CENTRAL === */
+
+/* === Função de destaque central === */
+function destacarCentral() {
+  const cards = document.querySelectorAll(".produto");
+  const centro = window.innerWidth / 2;
+
+  cards.forEach(card => {
+    const box = card.getBoundingClientRect();
+    const distancia = Math.abs((box.left + box.width / 2) - centro);
+
+    if (distancia < 250) card.classList.add("central");
+    else card.classList.remove("central");
+  });
+}
+
+/* === Evento de destaque ao rolar === */
 const produtosDiv = document.getElementById('produtos');
 
 produtosDiv.addEventListener('scroll', () => {
-  const produtos = document.querySelectorAll('.produto');
-  let centro = produtosDiv.scrollLeft + produtosDiv.clientWidth / 2;
-
-  produtos.forEach(produto => {
-    const box = produto.getBoundingClientRect();
-    const produtoCentro = box.left + box.width / 2;
-    const distancia = Math.abs(produtoCentro - window.innerWidth / 2);
-
-    if (distancia < 250) {
-      produto.classList.add('central');
-    } else {
-      produto.classList.remove('central');
-    }
-  });
+  destacarCentral();
 });
-// força atualização do destaque inicial
-setTimeout(() => produtosDiv.dispatchEvent(new Event('scroll')), 300);
 
 
 /* === alterar quantidade === */
@@ -617,12 +624,19 @@ function sairTelaRepouso() {
   produtosDiv.style.display = "flex";
   clearInterval(timerCarrossel);
   carregarProdutos();
+
+  setTimeout(() => {
+    produtosDiv.scrollLeft = 0;
+    destacarCentral();
+  }, 400);
+
   iniciarTimerInatividade();
 }
 
+
 function iniciarTimerInatividade() {
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(entrarTelaRepouso, 60000); // volta pra tela após 1min
+  timerInatividade = setTimeout(entrarTelaRepouso, 120000); // volta pra tela após 2min
 }
 
 window.addEventListener("DOMContentLoaded", () => {
