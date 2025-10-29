@@ -403,23 +403,24 @@ function iniciarTimerInatividade() {
   timerInatividade = setTimeout(iniciarAutoScroll, 120000); // 2 minutos
 }
 
-/* inicia auto-scroll */
 function iniciarAutoScroll() {
-  if (!produtosDiv) return; // garante que o elemento existe
-  if (autoScroll) return;   // evita múltiplos intervalos
+  if (!produtosDiv) return;
+  if (autoScroll) return;
 
   autoScroll = setInterval(() => {
 
     const maxScroll = produtosDiv.scrollWidth - produtosDiv.clientWidth;
 
-    // Se chegou no final → reinicia suavemente
-    if (produtosDiv.scrollLeft >= maxScroll - 30) {
+    // 👉 Se passou do fim ou ficou preso perto dele
+    if (produtosDiv.scrollLeft >= maxScroll - 5) {
       produtosDiv.scrollTo({ left: 0, behavior: "smooth" });
-    } else {
-      produtosDiv.scrollBy({ left: 6, behavior: "smooth" }); // velocidade
+      return;
     }
 
-  }, 70); // intervalo do movimento (menor = mais fluido)
+    // 👉 Continua rolando normalmente
+    produtosDiv.scrollBy({ left: 6, behavior: "smooth" });
+
+  }, 60);
 }
 
 /* parar auto-scroll ao tocar */
