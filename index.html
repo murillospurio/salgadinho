@@ -60,9 +60,8 @@ h1 {
   margin-top: 20px;
   transition: transform 0.3s ease;
 }
-.produto img:hover {
-  transform: scale(1.08);
-}
+.produto img:hover { transform: scale(1.08); }
+
 .produto div { font-size:32px; }
 .produto button {
   padding:22px 28px;
@@ -76,6 +75,7 @@ h1 {
 }
 .produto button:hover { background-color:#0056b3; }
 
+/* Destaque central */
 .produto.central {
   transform: scale(1.15);
   opacity: 1;
@@ -83,7 +83,6 @@ h1 {
   background: rgba(255, 255, 255, 1);
   box-shadow: 0 0 30px rgba(255,255,255,0.9);
 }
-
 .produto.central img {
   height: 700px;
   transform: scale(1.05);
@@ -142,28 +141,10 @@ h1 {
   transition:opacity 0.5s;
 }
 #overlay.show { opacity:1; pointer-events:all; }
+
 #overlay h2 { margin-bottom:20px; font-size:35px; }
-#overlay div { margin-bottom:15px; font-size:35px; }
-#overlay button {
-  margin:10px;
-  padding:40px 48px;
-  font-size:36px;
-  border-radius:10px;
-  cursor:pointer;
-  background-color:#007bff;
-  border:none;
-  color:#fff;
-}
-#overlay button:hover { background-color:#0056b3; }
 
-/* Opções de pagamento */
-#pagamentoOpcoes { display:none; flex-direction:column; gap:15px; margin-top:20px; }
-#pagamentoOpcoes button { font-size:36px; padding:40px; border-radius:10px; border:none; cursor:pointer; color:white; font-weight:bold; }
-#btnDebito { background-color:#007bff; }
-#btnCredito { background-color:#28a745; }
-#btnPix { background-color:#ffc107; color:#000; }
-
-/* Tela de status */
+/* Status */
 #telaStatus {
   position: fixed;
   top: 0; left: 0;
@@ -186,7 +167,7 @@ h1 {
 <div id="produtos"></div>
 
 <div class="carrinho">
-  <img src="carrinho_novo.png" alt="Carrinho">
+  <img src="carrinho_novo.png">
   <div id="itensCarrinho">Vazio</div>
   <div>Total: R$ <span id="total">0.00</span></div>
   <button id="verPedidoBtn">Ver Pedido</button>
@@ -196,10 +177,10 @@ h1 {
 <div id="overlay">
   <h2>Seu Pedido</h2>
   <div id="overlayItens"></div>
-  <div id="pagamentoOpcoes">
-    <button id="btnDebito" onclick="confirmarComForma('debito')">💳 Débito</button>
-    <button id="btnCredito" onclick="confirmarComForma('credito')">💰 Crédito</button>
-    <button id="btnPix" onclick="confirmarComForma('pix')">⚡ Pix</button>
+  <div id="pagamentoOpcoes" style="display:none; flex-direction:column; gap:15px; margin-top:20px;">
+    <button onclick="confirmarComForma('debito')">Débito</button>
+    <button onclick="confirmarComForma('credito')">Crédito</button>
+    <button onclick="confirmarComForma('pix')">Pix</button>
   </div>
   <button onclick="fecharOverlay()">Cancelar</button>
 </div>
@@ -214,243 +195,71 @@ const ID_MAQUINA = 'salgadinho';
 const API_BASE = 'https://futuro-b32e6f57c219.herokuapp.com';
 let produtos = [];
 let carrinho = {};
-
-/* === carregar produtos === */
-async function carregarProdutos() {
-  try {
-    const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
-    produtos = await resp.json();
-
-    carregarEstoqueLocal(); // mantém o estoque local se você está usando
-    mostrarProdutos();      // exibe produtos normalmente
-
-    // ✅ Espera os produtos serem renderizados e aplica o destaque central
-    setTimeout(() => {
-      produtosDiv.dispatchEvent(new Event("scroll"));
-    }, 500);
-
-  } catch(e) {
-    alert("Erro ao carregar produtos");
-  }
-}
-
-
-function mostrarProdutos() {
-  const div = document.getElementById('produtos');
-  div.innerHTML = '';
-
-  produtos.forEach((p) => {
-    const el = document.createElement('div');
-    el.className = 'produto';
-
-    let imgPath = p.img && p.img.startsWith("http")
-      ? p.img
-      : `${API_BASE}/static/uploads/${ID_MAQUINA}/${p.img}`;
-
-    el.innerHTML = `
-      <img src="${imgPath}" alt="${p.nome}" onerror="this.style.display='none'">
-      <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}<br>Estoque:
-      <span id="estoque-${p.id}">${p.estoque}</span></div>
-      <div>
-        <button onclick="alterarQuantidade(${p.id},-1)">-</button>
-        <span id="qtd-${p.id}">0</span>
-        <button onclick="alterarQuantidade(${p.id},1)">+</button>
-      </div>`;
-    div.appendChild(el);
-  });
-}
-
-
-
-/* efeito destaque */
-document.getElementById('produtos').addEventListener('scroll', () => {
-  const produtos = document.querySelectorAll('.produto');
-  let centro = window.innerWidth / 2;
-  produtos.forEach(produto => {
-    const box = produto.getBoundingClientRect();
-    const distancia = Math.abs((box.left + box.width/2) - centro);
-    if (distancia < 250) produto.classList.add('central');
-    else produto.classList.remove('central');
-  });
-});
-
-/* === alterar quantidade === */
-function alterarQuantidade(id, delta) {
-  const produto = produtos.find(p => p.id === id);
-  if (!produto) return;
-  if (!carrinho[id]) carrinho[id] = 0;
-  carrinho[id] += delta;
-  if (carrinho[id] < 0) carrinho[id] = 0;
-  if (carrinho[id] > produto.estoque) carrinho[id] = produto.estoque;
-  document.getElementById(`qtd-${id}`).textContent = carrinho[id];
-  document.getElementById(`estoque-${id}`).textContent = produto.estoque - carrinho[id];
-  atualizarCarrinho();
-  salvarEstoqueLocal();
-}
-
-/* salvar estoque */
-function salvarEstoqueLocal() {
-  localStorage.setItem("estoqueLocal", JSON.stringify(produtos.map(p => ({
-    id: p.id,
-    estoque: parseInt(document.getElementById(`estoque-${p.id}`).textContent)
-  }))));
-}
-function carregarEstoqueLocal() {
-  const salvo = localStorage.getItem("estoqueLocal");
-  if (!salvo) return;
-  JSON.parse(salvo).forEach(item => {
-    const p = produtos.find(prod => prod.id === item.id);
-    if (p) p.estoque = item.estoque;
-  });
-}
-
-/* atualizar carrinho */
-function atualizarCarrinho() {
-  const divCarrinho = document.getElementById('itensCarrinho');
-  let total = 0, vazio = true;
-  divCarrinho.innerHTML = '';
-  for (let id in carrinho) {
-    const qtd = carrinho[id];
-    if (qtd > 0) {
-      vazio = false;
-      const p = produtos.find(prod => prod.id == id);
-      const subtotal = p.preco * qtd;
-      total += subtotal;
-      divCarrinho.innerHTML += `${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
-    }
-  }
-  if (vazio) divCarrinho.innerHTML = 'Vazio';
-  document.getElementById('total').textContent = total.toFixed(2);
-}
-
-/* cancelar pedido */
-function cancelarPedido() {
-  for (let id in carrinho) {
-    carrinho[id] = 0;
-    const produto = produtos.find(p => p.id == id);
-    if (produto) {
-      document.getElementById(`qtd-${id}`).textContent = "0";
-      document.getElementById(`estoque-${id}`).textContent = produto.estoque;
-    }
-  }
-  atualizarCarrinho();
-}
-
-/* overlay */
-document.getElementById('verPedidoBtn').addEventListener('click', ()=>{
-  overlayItens.innerHTML='';
-  let total=0, vazio=true;
-  for (let id in carrinho) {
-    const qtd = carrinho[id];
-    if(qtd>0){
-      vazio=false;
-      const p = produtos.find(x=>x.id==id);
-      const subtotal=p.preco*qtd;
-      total+=subtotal;
-      overlayItens.innerHTML+=`${p.nome} x ${qtd} = R$ ${subtotal.toFixed(2)}<br>`;
-    }
-  }
-  if(vazio){
-    overlayItens.innerHTML='Carrinho vazio!';
-    pagamentoOpcoes.style.display='none';
-  } else {
-    overlayItens.innerHTML+=`<br><b>Total: R$ ${total.toFixed(2)}</b>`;
-    pagamentoOpcoes.style.display='flex';
-  }
-  overlay.classList.add('show');
-});
-function fecharOverlay(){ overlay.classList.remove('show'); pagamentoOpcoes.style.display='none'; }
-
-/* pedido */
-async function confirmarComForma(forma) {
-  const items=[], totalEl=document.getElementById("total");
-  for (let id in carrinho){
-    if(carrinho[id]>0){
-      const p=produtos.find(prod=>prod.id==id);
-      items.push({id:p.id,name:p.nome.toLowerCase().replace(/\s/g,"_"),qty:carrinho[id]});
-    }
-  }
-  if(items.length===0)return alert('Carrinho vazio!');
-
-  const payload={ order_id:"PED-"+Date.now(), total:Number(totalEl.textContent), items, forma_pagamento:forma };
-
-  try{
-    const resp=await fetch(`${API_BASE}/pedido/${ID_MAQUINA}`,{
-      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
-    });
-    const data=await resp.json();
-    fecharOverlay();
-    carrinho={}; document.getElementById('itensCarrinho').innerHTML='Vazio'; document.getElementById('total').textContent='0.00';
-
-    telaStatus.style.display="flex";
-    textoStatus.innerText="✅ Pedido enviado! Aperte o botão verde da maquininha.";
-    imgStatus.src="maquininha.png"; imgStatus.style.display="block";
-    setTimeout(()=>{ telaStatus.style.display="none"; },15000);
-
-  }catch(e){
-    alert("Erro ao enviar pedido.");
-  }
-}
-
-/* === AUTO SCROLL SEM TELA DE ESPERA (CORRIGIDO) === */
-let timerInatividade = null;
-let autoScroll = null;
 let produtosDiv;
+let autoScroll = null;
+let timerInatividade = null;
+let indiceAtual = 0;
 
-/* inicia contador de inatividade */
+/* ====== CARREGAR PRODUTOS ====== */
+async function carregarProdutos() {
+  const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
+  produtos = await resp.json();
+  mostrarProdutos();
+}
+
+/* ====== MONTAR TELA ====== */
+function mostrarProdutos() {
+  const div = document.getElementById("produtos");
+  div.innerHTML = "";
+  produtos.forEach(p => {
+    div.innerHTML += `
+      <div class="produto">
+        <img src="${p.img}" />
+        <div><b>${p.nome}</b><br>R$ ${p.preco.toFixed(2)}</div>
+        <div>
+          <button onclick="alterarQuantidade(${p.id},-1)">-</button>
+          <span id="qtd-${p.id}">0</span>
+          <button onclick="alterarQuantidade(${p.id},1)">+</button>
+        </div>
+      </div>`;
+  });
+}
+
+/* ====== AUTO SCROLL POR ÍNDICE ====== */
+function iniciarAutoScroll() {
+  const cards = document.querySelectorAll(".produto");
+  if (autoScroll || cards.length === 0) return;
+
+  autoScroll = setInterval(() => {
+    indiceAtual = (indiceAtual + 1) % cards.length;
+    const card = cards[indiceAtual];
+    produtosDiv.scrollTo({
+      left: card.offsetLeft - (window.innerWidth / 2) + (card.offsetWidth / 2),
+      behavior: "smooth"
+    });
+  }, 2000);
+}
+
+function pararAutoScroll() {
+  clearInterval(autoScroll);
+  autoScroll = null;
+}
+
 function iniciarTimerInatividade() {
   pararAutoScroll();
   clearTimeout(timerInatividade);
-  timerInatividade = setTimeout(iniciarAutoScroll, 120000); // 2 minutos
+  timerInatividade = setTimeout(iniciarAutoScroll, 120000);
 }
 
-function iniciarAutoScroll() {
-  if (!produtosDiv) return;
-  if (autoScroll) return;
-
-  autoScroll = setInterval(() => {
-
-    produtosDiv.scrollBy({ left: 6, behavior: "smooth" });
-
-    const maxScroll = produtosDiv.scrollWidth - produtosDiv.clientWidth;
-
-    // 🔥 tolerância aumenta confiabilidade no WebView Android
-    if (produtosDiv.scrollLeft >= maxScroll - 50) {
-      produtosDiv.scrollTo({ left: 0, behavior: "smooth" });
-    }
-
-  }, 60);
-}
-
-
-
-/* parar auto-scroll ao tocar */
-function pararAutoScroll() {
-  if (autoScroll) {
-    clearInterval(autoScroll);
-    autoScroll = null;
-  }
-}
-
-/* Eventos para reiniciar contagem ao tocar na tela */
-window.addEventListener("touchstart", iniciarTimerInatividade);
-window.addEventListener("click", iniciarTimerInatividade);
-
-/* Quando a pagina carregar, garantir que produtosDiv existe */
+/* ====== EVENTOS ====== */
 window.addEventListener("DOMContentLoaded", () => {
-
-  // agora garantimos que o catálogo existe
   produtosDiv = document.getElementById("produtos");
-
-  carregarProdutos();        // carrega catálogo
-  iniciarTimerInatividade(); // inicia contagem do auto-scroll
-
-  // força aplicar destaque no produto central ao abrir
-  setTimeout(() => {
-    produtosDiv.dispatchEvent(new Event('scroll'));
-  }, 600);
+  carregarProdutos();
+  iniciarTimerInatividade();
 });
 
+window.addEventListener("touchstart", iniciarTimerInatividade);
+window.addEventListener("click", iniciarTimerInatividade);
 </script>
 </body>
 </html>
