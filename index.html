@@ -479,7 +479,11 @@ async function confirmarComForma(forma) {
     const qtd = carrinho[id];
     if (qtd > 0) {
       const p = produtos.find(prod => prod.id == id);
-      items.push({ id: p.id, quantidade: qtd });
+      items.push({
+  id: p.id,
+  name: p.nome.toLowerCase().replace(/\s/g, "_"),
+  qty: carrinho[id]
+});
       total += p.preco * qtd;
     }
   }
@@ -492,10 +496,11 @@ async function confirmarComForma(forma) {
   // Cria o payload do pedido (compatível com seu Flask)
   const payload = {
   order_id: "PED-" + Date.now(),
-  pedido: items,          // <-- troque items por pedido
   total: Number(total.toFixed(2)),
+  items: items,
   forma_pagamento: forma
 };
+
 
 
   const tela = document.getElementById("telaStatus");
