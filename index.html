@@ -287,7 +287,6 @@ async function carregarProdutos() {
   try {
     const resp = await fetch(`${API_BASE}/catalogo/${ID_MAQUINA}`);
     produtos = await resp.json();
-    carregarEstoqueLocal();
     console.log("Resposta do servidor:", produtos);
     mostrarProdutos();
  } catch(e){
@@ -377,27 +376,6 @@ function alterarQuantidade(id, delta) {
 
   // atualiza a soma e o resumo do carrinho
   atualizarCarrinho();
-  salvarEstoqueLocal();
-}
-
-/* === Salvar e carregar estoque local === */
-function salvarEstoqueLocal() {
-  localStorage.setItem("estoqueLocal", JSON.stringify(produtos.map(p => ({
-    id: p.id,
-    estoque: parseInt(document.getElementById(`estoque-${p.id}`).textContent)
-  }))));
-}
-
-function carregarEstoqueLocal() {
-  const salvo = localStorage.getItem("estoqueLocal");
-  if (!salvo) return;
-  const estoqueLocal = JSON.parse(salvo);
-  estoqueLocal.forEach(item => {
-    const p = produtos.find(prod => prod.id === item.id);
-    if (p) {
-      p.estoque = item.estoque;
-    }
-  });
 }
 
 /* === atualizar carrinho === */
@@ -539,16 +517,27 @@ async function confirmarComForma(forma) {
         <p><b>Ou copie o código Pix:</b><br>${data.qr_code}</p>
       `;
       document.getElementById("pagamentoOpcoes").style.display = "none";
-      overlay.classList.add('show');
-      return; // mantém QR na tela até o pagamento
-    }
+  overlay.classList.add('show');
+
+  // ✅ Timer de 1 minuto (60.000 ms) para fechar sozinho
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    cancelarPedido(); // limpa carrinho
+    iniciarTimerInatividade(); // volta para repouso depois de inativo
+  }, 60000);
+
+  return; // mantém QR na tela até 1 min ou pagamento
+}
 
     // === Se for DÉBITO ou CRÉDITO ===
     fecharOverlay();
-    salvarEstoqueLocal();
 
     // 🔹 limpa carrinho antes de mostrar a tela
 carrinho = {};
+produtos.forEach(p => {
+  document.getElementById(`qtd-${p.id}`).textContent = "0";
+  document.getElementById(`estoque-${p.id}`).textContent = p.estoque;
+});
 document.getElementById('itensCarrinho').innerHTML = 'Vazio';
 document.getElementById('total').textContent = '0.00';
 
@@ -644,6 +633,7 @@ window.addEventListener("DOMContentLoaded", () => {
   tela.addEventListener("click", sairTelaRepouso);
   entrarTelaRepouso(); // inicia em modo repouso
   iniciarTimerInatividade(); // só entra em repouso após 1 minuto sem interação
+  carregarProdutos();
 });
 
 </script>
