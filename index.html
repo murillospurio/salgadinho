@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Convêniencia Machine</title>
 <style>
 body {
@@ -16,18 +17,18 @@ h1 {
   text-align:center;
   color:#0816da;
   text-shadow:1px 1px 5px rgba(0,0,0,0.7);
-  margin-top:150px;
-  margin-bottom: 200px;
+  margin-top:20px;
+  margin-bottom: 10px;
 }
 /* Produtos */
 #produtos {
   display:flex;
   overflow-x:auto;
-  scroll-snap-type: x mandatory;
-  padding:50px 20px 120px 20px;
-  gap:20px;
+  padding:40px 10px 140px 10px;
+  gap:12px;
   justify-content:flex-start;
-  scrollbar-width:none;
+  scroll-behavior: smooth;
+  will-change: scroll-position;
 }
 #produtos::before,
 #produtos::after {
@@ -37,9 +38,8 @@ h1 {
 #produtos::-webkit-scrollbar { display:none; }
 
 .produto {
-  flex:0 0 480px;
-  height: 900px;
-  scroll-snap-align:center;
+  flex:0 0 270px;
+  height: 480px;
   border-radius: 20px;
   background:rgba(255,255,255,0.9);
   box-shadow:0 8px 20px rgba(0,0,0,0.3);
@@ -47,48 +47,47 @@ h1 {
   flex-direction:column;
   align-items:center;
   justify-content:space-between;
+  transform-origin: center center;
   transition: transform 0.3s, opacity 0.3s;
-  padding:25px 20px;
+  padding:15px;
   box-sizing:border-box;
 }
 .produto img {
   width: 90%;
-  height: 600px;
+  height: 260px;
   object-fit: contain;
   border-radius: 15px;
-  margin-top: 20px;
-  transition: transform 0.3s ease;
+  margin-top: 5px;
+  transition: none;
+  will-change: transform;
+  transform: translateZ(0);
 }
 .produto img:hover {
   transform: scale(1.08);
 }
 .produto div { font-size:32px; }
 .produto button {
-  padding:22px 28px;
+  padding:18px 20px;
   margin:8px;
   cursor:pointer;
   border:none;
   border-radius:5px;
   background-color:#007bff;
   color:#fff;
-  font-size:32px;
+  font-size:24px;
 }
 .produto button:hover { background-color:#0056b3; }
 
 .produto.central {
-  transform: scale(1.15);
+  transform: scale(1.08);
   opacity: 1;
   z-index: 10;
   background: rgba(255, 255, 255, 1);
   box-shadow: 0 0 30px rgba(255,255,255,0.9);
 }
 
-.produto.central img {
-  height: 700px;
-  transform: scale(1.05);
-}
 .produto:not(.central) {
-  transform: scale(0.85);
+  transform: scale(0.88);
   opacity: 0.6;
   background: rgba(255, 255, 255, 0.6);
   box-shadow: none;
@@ -102,25 +101,50 @@ h1 {
   width: 100%;
   background: rgba(255,255,255,0.60);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 10px 15px 20px 15px;
   box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
   font-size: 30px;
   z-index: 100;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
 }
-.carrinho img { width: 100px; height: 100px; margin: 0; }
-#itensCarrinho { flex-grow: 1; overflow-x: auto; white-space: nowrap; padding: 0 10px; font-size: 26px; }
-.carrinho button {
-  width: 100%;
-  padding: 16px 22px;
-  font-size: 30px;
-  border-radius: 6px;
-  margin: 10px;
+/* LADO ESQUERDO */
+.carrinho-esquerda {
+  display: flex;
+  flex-direction: column;
+  flex: 1;                  /* ocupa a maior parte */
+}
+
+.carrinho-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.carrinho img { width: 40px; height: 40px; margin: 0; }
+#itensCarrinho { flex-grow: 1; overflow-x: auto; white-space: nowrap; padding: 0 10px; font-size: 22px; }
+.totalCarrinho {
+  margin-top: 6px;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+/* LADO DIREITO */
+.carrinho-direita {
+  display: flex;
+  flex-direction: column;  /* Botões um abaixo do outro */
+  gap: 14px;
+  margin-left: 20px;
+}
+
+.carrinho-direita button {
+  padding: 18px 32px;
+  font-size: 28px;
+  border-radius: 12px;
   border: none;
+  cursor: pointer;
 }
 
 /* Overlay */
@@ -245,11 +269,18 @@ h1 {
 <div id="produtos"></div>
 
 <div class="carrinho">
-  <img src="carrinho_novo.png" alt="Carrinho">
-  <div id="itensCarrinho">Vazio</div>
-  <div>Total: R$ <span id="total">0.00</span></div>
-  <button id="verPedidoBtn">Ver Pedido</button>
-  <button onclick="cancelarPedido()">Cancelar Pedido</button>
+  <div class="carrinho-esquerda">
+    <div class="carrinho-topo">
+      <img src="carrinho_novo.png">
+  <div id="itensCarrinho"></div>
+    </div>
+    <div class="totalCarrinho">Total: R$ <span id="total">0.00</span></div>
+  </div>
+
+  <div class="carrinho-direita">
+    <button id="verPedidoBtn">Ver Pedido</button>
+    <button id="CancelarBtn" onclick="cancelarPedido()">Cancelar Pedido</button>
+  </div>
 </div>
 
 <div id="overlay">
@@ -328,34 +359,41 @@ function mostrarProdutos() {
     div.appendChild(el);
   });
 
-  // ✅ Garante que o primeiro produto fique centralizado e destacado ao abrir
   setTimeout(() => {
-    produtosDiv.scrollLeft = 0;
+    const primeiro = document.querySelector('.produto');
+    if (primeiro) {
+      const container = produtosDiv;
+      const pos = primeiro.offsetLeft - (container.offsetWidth / 2) + (primeiro.offsetWidth / 2);
+      container.scrollLeft = pos;
+    }
     destacarCentral();
-  }, 300);
+  }, 400);
 }
 
-/* === Função de destaque central === */
 function destacarCentral() {
-  const cards = document.querySelectorAll(".produto");
-  const centro = window.innerWidth / 2;
+  const container = document.getElementById('produtos');
+  const cards = document.querySelectorAll('.produto');
+  if (!container || cards.length === 0) return;
+
+  const cbox = container.getBoundingClientRect();
+  const centro = cbox.left + cbox.width / 2;
+
+  let maisProximo = null;
+  let menorDist = Infinity;
 
   cards.forEach(card => {
     const box = card.getBoundingClientRect();
-    const distancia = Math.abs((box.left + box.width / 2) - centro);
-
-    if (distancia < 250) card.classList.add("central");
-    else card.classList.remove("central");
+    const meioCard = box.left + box.width / 2;
+    const dist = Math.abs(meioCard - centro);
+    if (dist < menorDist) {
+      menorDist = dist;
+      maisProximo = card;
+    }
   });
+
+  cards.forEach(c => c.classList.remove('central'));
+  if (maisProximo) maisProximo.classList.add('central');
 }
-
-/* === Evento de destaque ao rolar === */
-const produtosDiv = document.getElementById('produtos');
-
-produtosDiv.addEventListener('scroll', () => {
-  destacarCentral();
-});
-
 
 /* === alterar quantidade === */
 function alterarQuantidade(id, delta) {
@@ -552,6 +590,7 @@ document.getElementById('total').textContent = '0.00';
   entrarTelaRepouso(); // entra no descanso imediatamente
 }, 15000);
 
+
   } catch (e) {
     console.error("Erro ao enviar pedido:", e);
     alert("❌ Falha de conexão. Abra o terminal clicando no botao verde e cancele a operação.");
@@ -563,10 +602,25 @@ let slideIndex = 0;
 let timerCarrossel = null;
 let timerInatividade = null;
 
+const produtosDiv = document.getElementById('produtos');
+
+let aguardando = false;
+produtosDiv.addEventListener('scroll', () => {
+  if (aguardando) return;
+  aguardando = true;
+  requestAnimationFrame(() => {
+    destacarCentral();
+    aguardando = false;
+  });
+});
+
+window.addEventListener('resize', destacarCentral);
+setTimeout(destacarCentral, 400);
+
+
 async function entrarTelaRepouso() {
   const tela = document.getElementById("telaRepouso");
   const slides = document.getElementById("slidesEspera");
-  const produtosDiv = document.getElementById("produtos");
 
   tela.classList.add("ativo");
   tela.style.display = "flex";
