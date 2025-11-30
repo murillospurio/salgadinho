@@ -492,39 +492,9 @@ function fecharOverlay(){
   pagamentoOpcoes.style.display = 'none';
 }
 
-async function temInternet() {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
-
-    const resp = await fetch(`${API_BASE}/ping`, {
-      method: "GET",
-      signal: controller.signal
-    });
-
-    clearTimeout(timeout);
-
-    // Servidor respondeu → há internet
-    return resp.ok;
-
-  } catch (e) {
-    return false; // Sem internet
-  }
-}
-
-function mostrarErroConexao() {
-  alert("❌ Sem conexão com a internet.\nConecte-se ao Wi-Fi para concluir o pagamento.");
-}
 
 /* === confirmar pedido === */
 async function confirmarComForma(forma) {
-
-  // ❗ Verificar internet
-  if (!(await temInternet())) {
-    mostrarErroConexao();
-    return;
-  }
-  
   const items = [];
   let total = 0;
 
